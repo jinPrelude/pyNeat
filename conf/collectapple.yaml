@@ -1,0 +1,18 @@
+env:
+  name: unitycollectapple
+  max_step: 300
+
+network:
+  name: gym_model
+  num_state: 6
+  num_action: 2
+  discrete_action: False
+  gru: False
+
+strategy:
+  name : openai_es
+  init_sigma: 0.2
+  sigma_decay: 0.9999
+  learning_rate: 0.05
+  offspring_num: 48
+  individual_play: False
