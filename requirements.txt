@@ -1,0 +1,14 @@
+# python = 3.8
+torch==1.8.1
+pyyaml
+numpy==1.21.0
+gym
+gym[box2d]
+wandb
+pybullet==3.0.0 # latest version(>=3.1.7 print unexpected string "argv[0]=")
+moviepy==1.0.3
+black==21.7b0
+mpi4py==3.0.3
+
+# for server environment wandb video logging
+pyvirtualdisplay==2.2 # you should also : sudo apt-get install xvfb
