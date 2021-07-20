@@ -1,13 +1,17 @@
 import os
 import time
 from datetime import datetime
+from copy import deepcopy
 from collections import deque
 from mpi4py import MPI
 import numpy as np
 import torch
 import wandb
+from moviepy.editor import ImageSequenceClip
+from pyvirtualdisplay import Display
+
+import builder
 from .abstracts import BaseESLoop
-from collections import deque
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -40,7 +44,6 @@ class ESLoop(BaseESLoop):
         self.network.zero_init()
         self.ep5_rewards = deque(maxlen=5)
         self.reset_worker_status()
-
         # create log directory
         now = datetime.now()
         curr_time = now.strftime("%Y%m%d%H%M%S")
@@ -52,7 +55,10 @@ class ESLoop(BaseESLoop):
             os.makedirs(_dir)
 
         if self.log:
+            self.display = Display(visible=0, size=(300, 300))
+            self.display.start()
             wandb.init(project=env_name, config=config)
+            self.env_cfg = config["env"]
 
     def reset_worker_status(self):
         self.free_worker = np.zeros(self.n_workers)
@@ -113,7 +119,6 @@ class ESLoop(BaseESLoop):
                 f"episode: {ep_num}, Best reward: {best_reward:.2f}, sigma: {curr_sigma:.3f}, time: {consumed_time:.2f}, rollout_t: {rollout_consumed_time:.2f}, eval_t: {eval_consumed_time:.2f}"
             )
 
-            prev_reward = best_reward
             if self.log:
                 self.ep5_rewards.append(best_reward)
                 ep5_mean_reward = sum(self.ep5_rewards) / len(self.ep5_rewards)
@@ -121,6 +126,47 @@ class ESLoop(BaseESLoop):
 
             elite = self.offspring_strategy.get_elite_model()
             if ep_num % self.save_model_period == 0:
-                save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
-                torch.save(elite.state_dict(), save_pth)
+                # save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
+                # torch.save(elite.state_dict(), save_pth)
+                if self.log:
+                    test_log_model(self.save_dir, self.env_cfg, elite)
         self.terminate_all_workers()
+        self.display.stop()
+
+
+def test_log_model(save_dir, env_cfg, elite_network):
+    env = builder.build_env(env_cfg)
+    agent_ids = env.get_agent_ids()
+
+    models = {}
+    for agent_id in agent_ids:
+        models[agent_id] = deepcopy(elite_network)
+        models[agent_id].eval()
+        models[agent_id].reset()
+    obs = env.reset()
+
+    done = False
+    episode_reward = 0
+    ep_step = 0
+    ep_render_lst = []
+    while not done:
+        actions = {}
+        for k, model in models.items():
+            s = obs[k]["state"][np.newaxis, ...]
+            actions[k] = model(s)
+        obs, r, done, _ = env.step(actions)
+        rgb_array = env.render(mode="rgb_array")
+        ep_render_lst.append(rgb_array)
+        episode_reward += r
+        ep_step += 1
+    clip = ImageSequenceClip(ep_render_lst[::2], fps=15)
+    clip.write_gif(os.path.join(save_dir, "play.gif"), fps=15)
+    wandb.save(os.path.join(save_dir, "play.gif"))
+    torch.save(elite_network.state_dict(), os.path.join(save_dir, "elite.pt"))
+    wandb.save(os.path.join(save_dir, "elite.pt"))
+
+    wandb.log({"test_reward": episode_reward})
+
+    del ep_render_lst
+
+    return episode_reward

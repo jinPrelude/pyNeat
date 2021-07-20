@@ -16,11 +16,13 @@ def sigterm_handler(signal, frame):
     comm.Abort()
     raise KeyboardInterrupt
 
+
 signal.signal(signal.SIGINT, sigterm_handler)
 
 # MPI setting.
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
+
 
 def mpi_fork(n):
     """Re-launches the current script with workers
@@ -69,7 +71,6 @@ def worker(env_cfg, network_cfg):
     env = builder.build_env(env_cfg)
     network = builder.build_network(network_cfg)
     run_rollout(env, network)
-    
 
 
 if __name__ == "__main__":
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if "parent" == mpi_fork(args.n_workers + 1):
         print("abort all processes.")
-        MPI.MPI_Abort(comm)
+        comm.Abort()
         sys.exit()
 
     with open(args.cfg_path) as f:

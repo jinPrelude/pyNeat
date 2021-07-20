@@ -5,6 +5,7 @@ import numpy as np
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
+
 def run_rollout(env, network):
     count = 0
     while True:

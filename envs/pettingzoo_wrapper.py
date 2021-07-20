@@ -60,5 +60,8 @@ class PettingzooWrapper:
     def get_agent_ids(self):
         return self.env.agents
 
-    def render(self):
-        self.env.render()
+    def render(self, mode):
+        return self.env.render(mode=mode)
+
+    def close(self):
+        self.env.close()

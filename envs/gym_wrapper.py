@@ -47,8 +47,8 @@ class GymWrapper:
     def get_agent_ids(self):
         return ["0"]
 
-    def render(self):
-        return self.env.render(mode="rgb_array")
+    def render(self, mode):
+        return self.env.render(mode=mode)
 
     def close(self):
         self.env.close()
