@@ -3,9 +3,12 @@ import sys
 import signal
 import subprocess
 import argparse
+import random
 
 import yaml
 from mpi4py import MPI
+import torch
+import numpy as np
 
 import builder
 from learning_strategies.worker_func import run_rollout
@@ -44,8 +47,13 @@ def mpi_fork(n):
         print("assigning the rank and nworkers", nworkers, rank)
         return "child"
 
+def set_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 def main(config, seed, n_workers, generation_num, eval_ep_num, log, save_model_period):
+    set_seed(seed)
     env = builder.build_env(config["env"])
     agent_ids = env.get_agent_ids()
     env_name = env.name
@@ -67,7 +75,8 @@ def main(config, seed, n_workers, generation_num, eval_ep_num, log, save_model_p
     loop.run()
 
 
-def worker(env_cfg, network_cfg):
+def worker(seed, env_cfg, network_cfg):
+    set_seed(seed)
     env = builder.build_env(env_cfg)
     network = builder.build_network(network_cfg)
     run_rollout(env, network)
@@ -102,4 +111,4 @@ if __name__ == "__main__":
             args.save_model_period,
         )
     else:
-        worker(config["env"], config["network"])
+        worker(args.seed, config["env"], config["network"])
