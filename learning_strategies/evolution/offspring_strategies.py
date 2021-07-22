@@ -1,4 +1,6 @@
 from copy import deepcopy
+from collections import deque
+import random
 
 import numpy as np
 import torch
@@ -428,3 +430,98 @@ class openai_es(BaseOffspringStrategy):
             offspring_num=self.offspring_num,
         )
         return wandb_cfg
+
+
+class buffer_es(openai_es):
+    def __init__(self, init_sigma, sigma_decay, learning_rate, offspring_num, buffer_size, batch_size, update_freq):
+        super().__init__(init_sigma, sigma_decay, learning_rate, offspring_num)
+        self.buffer = deque(maxlen=buffer_size)
+        self.batch_size = batch_size
+        self.update_freq = update_freq
+        self.max_reward = -1e7
+        self.min_reward = 1e7
+
+    def sample_buffer(self):
+        t = sorted(self.buffer, key=lambda x: x[1], reverse=True)
+        # print("t[0]: ", t[0][1])
+        # print("t[-1]: ", t[-1][1])
+        # print("len buffer: ", len(self.buffer))
+        ranks = random.sample(range(len(self.buffer)), self.batch_size)
+        sorted_rank = sorted(ranks)
+        minibatch = []
+        for i in sorted_rank:
+            minibatch.append(t[i])
+        # print(sorted_rank)
+        return np.array(sorted_rank), minibatch
+
+    def evaluate(self, rewards: list):
+        """Get rewards and offspring models, evaluate and update the elite
+        model and return new offsprings.
+
+        Parameters
+        ----------
+        rewards : list[float, ...]
+            Rewards received by offsprings
+
+        Returns
+        -------
+        offspring_group: list
+            New offsprings from updated models.
+        best_reward: float
+            Best rewards one of the offspring got.
+        curr_sigma: float
+            Current decayed sigma.
+        """
+
+        best_reward = max(rewards)
+        worst_reward = min(rewards)
+        if self.max_reward < best_reward:
+            self.max_reward = best_reward
+        if self.min_reward > worst_reward:
+            self.min_reward = worst_reward
+        # print("len rewards: ", len(rewards))
+        for i in range(len(rewards)):
+            self.buffer.append((self.epsilons[i], rewards[i]))
+        for _ in range(self.update_freq):
+            rewards, minibatch = self.sample_buffer()
+
+            batch_epsilons = []
+            for i in range(self.batch_size):
+                batch_epsilons.append(minibatch[i][0])
+
+            reward_array = np.zeros(len(rewards))
+            for idx in range(len(rewards)):
+                # print("reward: ", rewards[idx])
+                reward_array[idx] = ((len(self.buffer) - rewards[idx] - 1) / (len(self.buffer) - 1)) - 0.5
+                # print("after_reeval: ", reward_array[idx])
+            all_reward = (np.arange(len(self.buffer)) / (len(self.buffer) - 1)) - 0.5
+
+            reward_array = (reward_array - all_reward.mean()) / all_reward.std()
+
+            # get new mu
+            grad = deepcopy(self.mu_model)
+            grad_param_list = grad.get_param_list()
+            for grad_param in grad_param_list:
+                grad_param *= 0
+
+            update_factor = self.learning_rate / (len(batch_epsilons) * self.curr_sigma)
+            # multiply negative num to make minimize problem for optimizer
+            update_factor *= -1.0
+            for offs_idx, offs in enumerate(batch_epsilons):
+                offs_param_list = offs.get_param_list()
+                for grad_param, offs_param in zip(grad_param_list, offs_param_list):
+                    grad_param += offs_param * reward_array[offs_idx]
+            for grad_param in grad_param_list:
+                grad_param *= update_factor
+
+            self.optimizer.update(grad_param_list)
+
+        self.curr_sigma *= self.sigma_decay
+        offspring_group = self._gen_offsprings(
+            self.agent_ids,
+            self.mu_model,
+            self.curr_sigma,
+            self.offspring_num,
+        )
+        print("buffer len: ", len(self.buffer))
+        return offspring_group, best_reward, self.curr_sigma

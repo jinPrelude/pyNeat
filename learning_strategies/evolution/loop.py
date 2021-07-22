@@ -131,7 +131,8 @@ class ESLoop(BaseESLoop):
                 if self.log:
                     test_log_model(self.save_dir, self.env_cfg, elite)
         self.terminate_all_workers()
-        self.display.stop()
+        if self.log:
+            self.display.stop()
 
 
 def test_log_model(save_dir, env_cfg, elite_network):

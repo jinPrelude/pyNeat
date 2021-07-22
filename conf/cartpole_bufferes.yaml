@@ -11,8 +11,11 @@ network:
   gru: False
 
 strategy:
-  name : openai_es
+  name : buffer_es
   init_sigma: 0.168
   sigma_decay: 0.9999
   learning_rate: 0.087
   offspring_num: 96
+  buffer_size: 96
+  batch_size: 96
+  update_freq: 1

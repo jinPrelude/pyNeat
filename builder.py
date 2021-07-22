@@ -51,6 +51,16 @@ def build_loop(
             strategy_cfg["learning_rate"],
             strategy_cfg["offspring_num"],
         )
+    elif strategy_cfg["name"] == "buffer_es":
+        strategy = buffer_es(
+            strategy_cfg["init_sigma"],
+            strategy_cfg["sigma_decay"],
+            strategy_cfg["learning_rate"],
+            strategy_cfg["offspring_num"],
+            strategy_cfg["buffer_size"],
+            strategy_cfg["batch_size"],
+            strategy_cfg["update_freq"],
+        )
     elif strategy_cfg["name"] == "simple_genetic":
         strategy = simple_genetic(
             strategy_cfg["init_sigma"],
