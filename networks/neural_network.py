@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,6 +19,12 @@ class GymEnvModel(BaseNetwork):
             self.h = torch.zeros([1, 1, 32], dtype=torch.float)
         self.fc2 = nn.Linear(32, num_action)
         self.discrete_action = discrete_action
+
+        self.model_shape = []
+        for param in self.parameters():
+            shape = param.data.numpy().shape
+            size = deepcopy(param.data.numpy()).flatten().size
+            self.model_shape.append((shape, size))
 
     def forward(self, x):
         with torch.no_grad():
@@ -47,10 +56,30 @@ class GymEnvModel(BaseNetwork):
         param_list = []
         for param in self.parameters():
             param_list.append(param.data.numpy())
-        return param_list
+        return self._flatten_param(param_list)
 
     def apply_param(self, param_lst: list):
+        param_lst = self._restore_param(param_lst)
         count = 0
         for p in self.parameters():
             p.data = torch.tensor(param_lst[count]).float()
             count += 1
+
+    @staticmethod
+    def _flatten_param(param_list):
+        flattened_param = []
+        for param in param_list:
+            flattened_param.append(deepcopy(param).flatten())
+        flattened_param = np.concatenate(flattened_param)
+        return flattened_param
+
+    def _restore_param(self, param_array):
+        idx = 0
+        restored_param = []
+        for (shape, size) in self.model_shape:
+            param = param_array[idx : idx + size]
+            param = np.reshape(param, shape)
+            restored_param.append(param)
+            idx += size
+
+        return restored_param

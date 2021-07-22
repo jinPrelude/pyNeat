@@ -53,9 +53,8 @@ class simple_genetic(BaseOffspringStrategy):
             for _ in range((offspring_num // elite_num) - 1):
                 perturbed_network = deepcopy(p)
                 perturbed_network_param_list = perturbed_network.get_param_list()
-                for param in perturbed_network_param_list:
-                    noise = np.random.normal(0, sigma, size=param.shape)
-                    param += noise
+                noise = np.random.normal(0, sigma, size=perturbed_network_param_list.shape)
+                perturbed_network_param_list += noise
                 perturbed_network.apply_param(perturbed_network_param_list)
                 self.offsprings.append(perturbed_network)
         offspring_group = [wrap_agentid(agent_ids, model) for model in self.offsprings]
@@ -169,9 +168,8 @@ class simple_evolution(BaseOffspringStrategy):
         for _ in range(offspring_num - 2):
             preturbed_net = deepcopy(mu_model)
             perturbed_net_param_list = preturbed_net.get_param_list()
-            for param in perturbed_net_param_list:
-                epsilon = np.random.normal(0, sigma, size=param.shape)
-                param += epsilon
+            epsilon = np.random.normal(0, sigma, size=perturbed_net_param_list.shape)
+            perturbed_net_param_list += epsilon
             preturbed_net.apply_param(perturbed_net_param_list)
             self.offsprings.append(preturbed_net)
 
@@ -241,11 +239,9 @@ class simple_evolution(BaseOffspringStrategy):
         new_mu_param_list = self.elite_models[0].get_param_list()
         for elite in self.elite_models[1:]:
             elite_param_list = elite.get_param_list()
-            for mu_param, elite_param in zip(new_mu_param_list, elite_param_list):
-                mu_param += elite_param
+            new_mu_param_list += elite_param_list
         # get mean weight
-        for param in new_mu_param_list:
-            param /= self.elite_num
+        new_mu_param_list /= self.elite_num
 
         self.mu_model.apply_param(new_mu_param_list)
         self.curr_sigma *= self.sigma_decay
@@ -301,9 +297,7 @@ class openai_es(BaseOffspringStrategy):
 
         # epsilon of the pure mo_model is zero.
         zero_net = deepcopy(self.mu_model)
-        zero_net_param_list = zero_net.get_param_list()
-        for param in zero_net_param_list:
-            param = np.zeros(param.shape)
+        zero_net_param_list = zero_net.get_param_list() * 0
         zero_net.apply_param(zero_net_param_list)
         self.epsilons.append(zero_net)
 
@@ -312,12 +306,12 @@ class openai_es(BaseOffspringStrategy):
         for _ in range(offspring_num - 1):
             preturbed_net = deepcopy(mu_model)
             epsilon_net = deepcopy(mu_model)
+
             perturbed_net_param_list = preturbed_net.get_param_list()
             eps_net_param_list = deepcopy(zero_net_param_list)
-            for eps_param, perturb_param in zip(eps_net_param_list, perturbed_net_param_list):
-                epsilon = np.random.normal(size=perturb_param.shape)
-                eps_param += epsilon
-                perturb_param += epsilon * sigma
+            eps_net_param_list += np.random.normal(size=perturbed_net_param_list.shape)
+            perturbed_net_param_list += eps_net_param_list * sigma
+
             preturbed_net.apply_param(perturbed_net_param_list)
             offspring_group.append(wrap_agentid(agent_ids, preturbed_net))
             epsilon_net.apply_param(eps_net_param_list)
@@ -347,7 +341,6 @@ class openai_es(BaseOffspringStrategy):
         self.elite_model = network
         self.mu_model = network
         self.optimizer = Adam(self.mu_model, self.learning_rate)
-        # agent_ids, elite_models, mu_model, sigma_model, offspring_num
         offspring_group = self._gen_offsprings(
             self.agent_ids,
             self.mu_model,
@@ -378,15 +371,6 @@ class openai_es(BaseOffspringStrategy):
         offspring_rank_id = np.flip(np.argsort(rewards))
         best_reward = max(rewards)
 
-        # # reconstruct elite model using epsilon and sigma
-        # self.elite_model = deepcopy(self.mu_model)
-        # elite_param_list = self.elite_model.get_param_list()
-        # elite_epsilon = self.epsilons[offspring_rank_id[0]]
-        # eps_param_list = elite_epsilon.get_param_list()
-        # for elite_param, eps_param in zip(elite_param_list, eps_param_list):
-        #     elite_param += eps_param * self.curr_sigma
-        # self.elite_model.apply_param(elite_param_list)
-
         reward_array = np.zeros(len(rewards))
         for idx in reversed(range(len(rewards))):
             reward_array[offspring_rank_id[idx]] = ((len(rewards) - 1 - idx) / (len(rewards) - 1)) - 0.5
@@ -395,20 +379,15 @@ class openai_es(BaseOffspringStrategy):
 
         # get new mu
         grad = deepcopy(self.mu_model)
-        grad_param_list = grad.get_param_list()
-        for grad_param in grad_param_list:
-            grad_param *= 0
+        grad_param_list = grad.get_param_list() * 0
 
         update_factor = self.learning_rate / (len(self.epsilons) * self.curr_sigma)
         # multiply negative num to make minimize problem for optimizer
         update_factor *= -1.0
         for offs_idx, offs in enumerate(self.epsilons):
             offs_param_list = offs.get_param_list()
-            for grad_param, offs_param in zip(grad_param_list, offs_param_list):
-                grad_param += offs_param * reward_array[offs_idx]
-        for grad_param in grad_param_list:
-            grad_param *= update_factor
-
+            grad_param_list += offs_param_list * reward_array[offs_idx]
+        grad_param_list *= update_factor
         self.optimizer.update(grad_param_list)
 
         self.curr_sigma *= self.sigma_decay
