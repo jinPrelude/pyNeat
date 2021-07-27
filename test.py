@@ -8,6 +8,7 @@ import builder
 import os
 from copy import deepcopy
 from moviepy.editor import ImageSequenceClip
+from pyvirtualdisplay import Display
 
 
 def set_seed(seed):
@@ -21,6 +22,7 @@ def main():
     parser.add_argument("--cfg-path", type=str, default="conf/ant.yaml")
     parser.add_argument("--ckpt-path", type=str)
     parser.add_argument("--save-gif", action="store_true")
+    parser.add_argument("--server-run", action="store_true")
     args = parser.parse_args()
 
     with open(args.cfg_path) as f:
@@ -35,9 +37,13 @@ def main():
         save_dir = f"test_gif/{run_num}/"
         os.makedirs(save_dir)
 
+    if args.server_run:
+        display = Display(visible=0, size=(300, 300))
+        display.start()
+
     network = builder.build_network(config["network"])
     network.load_state_dict(torch.load(args.ckpt_path))
-    for i in range(100):
+    for i in range(10):
         models = {}
         for agent_id in agent_ids:
             models[agent_id] = deepcopy(network)
@@ -55,16 +61,17 @@ def main():
                 s = obs[k]["state"][np.newaxis, ...]
                 actions[k] = model(s)
             obs, r, done, _ = env.step(actions)
-            rgb_array = env.render()
+            rgb_array = env.render("rgb_array")
             if args.save_gif:
                 ep_render_lst.append(rgb_array)
             episode_reward += r
             ep_step += 1
         print("reward: ", episode_reward, "ep_step: ", ep_step)
         if args.save_gif:
-            clip = ImageSequenceClip(ep_render_lst, fps=30)
+            clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
             clip.write_gif(save_dir + f"ep_{i}.gif", fps=30)
         del ep_render_lst
+    display.stop()
 
 
 if __name__ == "__main__":
