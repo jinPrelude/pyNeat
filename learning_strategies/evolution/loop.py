@@ -40,6 +40,7 @@ class ESLoop(BaseESLoop):
         self.log = log
         self.save_model_period = save_model_period
         self.agent_ids = agent_ids
+        self.env_name = env_name
 
         self.network.zero_init()
         self.ep5_rewards = deque(maxlen=5)
@@ -126,16 +127,18 @@ class ESLoop(BaseESLoop):
 
             elite = self.offspring_strategy.get_elite_model()
             if ep_num % self.save_model_period == 0:
-                # save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
-                # torch.save(elite.state_dict(), save_pth)
                 if self.log:
-                    test_log_model(self.save_dir, self.env_cfg, elite)
+                    if "Unity" in self.env_name:
+                        save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
+                        torch.save(elite.state_dict(), save_pth)
+                    else:
+                        test_log_model(self.save_dir, self.env_cfg, elite)
         self.terminate_all_workers()
         self.display.stop()
 
 
 def test_log_model(save_dir, env_cfg, elite_network):
-    env = builder.build_env(env_cfg)
+    env = builder.build_env(env_cfg, rank)
     agent_ids = env.get_agent_ids()
 
     models = {}

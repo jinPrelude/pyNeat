@@ -56,7 +56,7 @@ def set_seed(seed):
 
 def main(config, seed, n_workers, generation_num, eval_ep_num, log, save_model_period):
     set_seed(seed)
-    env = builder.build_env(config["env"])
+    env = builder.build_env(config["env"], rank)
     agent_ids = env.get_agent_ids()
     env_name = env.name
     env.close()
@@ -79,7 +79,7 @@ def main(config, seed, n_workers, generation_num, eval_ep_num, log, save_model_p
 
 def worker(seed, env_cfg, network_cfg):
     set_seed(seed)
-    env = builder.build_env(env_cfg)
+    env = builder.build_env(env_cfg, rank)
     network = builder.build_network(network_cfg)
     run_rollout(env, network)
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg-path", type=str, default="conf/cartpole_openaies.yaml", help="config file to run.")
     parser.add_argument("--seed", type=int, default=0, help="random seed.")
-    parser.add_argument("--n-workers", type=int, default=1)
+    parser.add_argument("--n-workers", type=int, default=11)
     parser.add_argument("--generation-num", type=int, default=10000, help="max number of generation iteration.")
     parser.add_argument("--eval-ep-num", type=int, default=5, help="number of model evaluaion per iteration.")
     parser.add_argument("--log", action="store_true", help="wandb log")

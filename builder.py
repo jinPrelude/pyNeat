@@ -2,14 +2,18 @@ import yaml
 
 from envs.gym_wrapper import *
 from envs.pettingzoo_wrapper import *
+from envs.unity_wrapper import *
 from networks.neural_network import *
 from learning_strategies.evolution.offspring_strategies import *
 from learning_strategies.evolution.loop import *
 
 
-def build_env(config):
+def build_env(config, unity_worker_id):
     if config["name"] in ["simple_spread", "waterworld", "multiwalker"]:
         return PettingzooWrapper(config["name"], config["max_step"])
+    elif "Unity" in config["name"]:
+        if "CollectApple" in config["name"]:
+            return UnityCollectAppleWrapper(config["name"], unity_worker_id, config["max_step"])
     else:
         return GymWrapper(config["name"], config["max_step"], config["pomdp"])
 

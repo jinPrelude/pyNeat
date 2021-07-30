@@ -29,7 +29,7 @@ def main():
         config = yaml.load(f, Loader=yaml.FullLoader)
         f.close()
 
-    env = builder.build_env(config["env"])
+    env = builder.build_env(config["env"], 777)
     agent_ids = env.get_agent_ids()
 
     if args.save_gif:
@@ -61,14 +61,15 @@ def main():
                 s = obs[k]["state"][np.newaxis, ...]
                 actions[k] = model(s)
             obs, r, done, _ = env.step(actions)
-            rgb_array = env.render("rgb_array")
-            if args.save_gif:
-                ep_render_lst.append(rgb_array)
+            if "Unity" not in env.name:
+                rgb_array = env.render()
+                if args.save_gif:
+                    ep_render_lst.append(rgb_array)
             episode_reward += r
             ep_step += 1
         print("reward: ", episode_reward, "ep_step: ", ep_step)
-        if args.save_gif:
-            clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
+        if args.save_gif and "Unity" not in env.name:
+            clip = ImageSequenceClip(ep_render_lst, fps=30)
             clip.write_gif(save_dir + f"ep_{i}.gif", fps=30)
         del ep_render_lst
     display.stop()
