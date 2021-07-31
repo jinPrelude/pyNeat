@@ -12,3 +12,13 @@ mpi4py==3.0.3
 
 # for server environment wandb video logging
 pyvirtualdisplay==2.2 # you should also : sudo apt-get install xvfb
+
+## pettingzoo
+pettingzoo
+pettingzoo[mpe]
+pettingzoo[sisl]
+
+# unity
+gym-unity==0.27.0
+mlagents==0.27.0
+mlagents-envs==0.27.0
