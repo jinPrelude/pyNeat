@@ -35,7 +35,7 @@ class PettingzooWrapper:
         return_list = {}
         for agent in self.env.agent_iter():
             act = action[agent]
-            if self.name == "waterworkd":
+            if self.name == "waterworld":
                 act *= 0.001
             self.env.step(act)
             if agent == self.agents[-1]:
