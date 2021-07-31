@@ -162,8 +162,8 @@ def test_log_model(save_dir, env_cfg, elite_network):
         ep_render_lst.append(rgb_array)
         episode_reward += r
         ep_step += 1
-    clip = ImageSequenceClip(ep_render_lst[::2], fps=15)
-    clip.write_gif(os.path.join(save_dir, "play.gif"), fps=15)
+    clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
+    clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
     wandb.save(os.path.join(save_dir, "play.gif"))
     torch.save(elite_network.state_dict(), os.path.join(save_dir, "elite.pt"))
     wandb.save(os.path.join(save_dir, "elite.pt"))
