@@ -8,7 +8,7 @@ class PettingzooWrapper:
         if name == "simple_spread":
             self.env = simple_spread_v2.env()
         elif name == "waterworld":
-            self.env = waterworld_v3.env()
+            self.env = waterworld_v3.env(n_pursuers=3)
         elif name == "multiwalker":
             self.env = multiwalker_v6.env()
         else:
