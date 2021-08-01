@@ -4,13 +4,13 @@ import numpy as np
 
 
 class Genome:
-    def __init__(self, num_state, num_action):
+    def __init__(self, num_state, num_action, mu=0.0, std=1.0):
         self.node_genes = NodeGenes(num_state, num_action)
         self.connect_genes = ConnectGenes()
         # initialize connect genes
         sensor_nodes = self.node_genes.get_sensor_nodes()
         output_nodes = self.node_genes.get_output_nodes()
-        self.connect_genes.init_connection(sensor_nodes, output_nodes)
+        self.connect_genes.init_connection(sensor_nodes, output_nodes, mu, std)
 
         self.connections = self.connect_genes.genes_by_connect
         self.nodes = self.node_genes.nodes
