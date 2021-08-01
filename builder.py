@@ -2,6 +2,7 @@ import yaml
 
 from envs import *
 from networks.neural_network import *
+from networks.neat.feedforward import NeatFeedForward
 from learning_strategies.evolution.offspring_strategies import *
 from learning_strategies.evolution.loop import *
 
@@ -26,6 +27,8 @@ def build_network(config):
             config["discrete_action"],
             config["gru"],
         )
+    if config["name"] == "NeatFeedForward":
+        return NeatFeedForward(config["num_state"], config["num_action"], config["discrete_action"])
 
 
 def build_loop(
@@ -59,6 +62,15 @@ def build_loop(
         strategy = simple_genetic(
             strategy_cfg["init_sigma"],
             strategy_cfg["sigma_decay"],
+            strategy_cfg["elite_num"],
+            strategy_cfg["offspring_num"],
+        )
+    elif strategy_cfg["name"] == "neat":
+        strategy = neat(
+            strategy_cfg["init_sigma"],
+            strategy_cfg["sigma_decay"],
+            strategy_cfg["max_weight"],
+            strategy_cfg["min_weight"],
             strategy_cfg["elite_num"],
             strategy_cfg["offspring_num"],
         )

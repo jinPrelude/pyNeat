@@ -1,20 +1,31 @@
 from abc import *
 import math
 
+import numpy as np
+
 from networks.abstracts import BaseNetwork
 from networks.neat.genes import Genome
 
 
-class NeatNetwork(BaseNetwork):
+class NeatFeedForward(BaseNetwork):
     def __init__(self, num_state, num_action, discrete_action):
+        self.num_state = num_state
+        self.num_action = num_action
+        self.discrete_action = discrete_action
+
         self.genome = Genome(num_state, num_action)
         self.model = FeedForwardNetwork.create(self.genome)
 
     def forward(self, x):
-        return self.model.activate(x)
+        output = self.model.activate(x[0])
+        return np.array(output)
 
     def zero_init(self):
         pass
+
+    def normal_init(self, mu, std):
+        self.genome = Genome(self.num_state, self.num_action, mu, std)
+        self.model = FeedForwardNetwork.create(self.genome)
 
     def reset(self):
         pass
