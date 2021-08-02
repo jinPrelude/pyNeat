@@ -1,10 +1,7 @@
-import yaml
-
 from envs import *
 from networks.neural_network import *
 from networks.neat.feedforward import NeatFeedForward
-from learning_strategies.evolution.offspring_strategies import *
-from learning_strategies.evolution.loop import *
+from learning_strategies import *
 
 
 def build_env(config, unity_worker_id):
@@ -66,7 +63,7 @@ def build_loop(
             strategy_cfg["offspring_num"],
         )
     elif strategy_cfg["name"] == "neat":
-        strategy = neat(
+        strategy = Neat(
             strategy_cfg["init_sigma"],
             strategy_cfg["sigma_decay"],
             strategy_cfg["max_weight"],

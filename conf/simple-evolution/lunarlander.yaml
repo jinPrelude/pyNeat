@@ -1,18 +1,18 @@
 env:
   name: LunarLanderContinuous-v2
   max_step: 300
-  pomdp: True
+  pomdp: False
 
 network:
   name: gym_model
   num_state: 8
   num_action: 4
   discrete_action: False
-  gru: True
+  gru: False
 
 strategy:
-  name : openai_es
-  init_sigma: 0.168
+  name : simple_evolution
+  init_sigma: 2
   sigma_decay: 0.9999
-  learning_rate: 0.087
-  offspring_num: 10
+  elite_num: 10
+  offspring_num: 96
