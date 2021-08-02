@@ -10,13 +10,18 @@ from networks.neat.genes import Genome
 
 
 class NeatFeedForward(BaseNetwork):
-    def __init__(self, num_state, num_action, discrete_action):
+    def __init__(self, num_state, num_action, discrete_action, mutate_sigma, max_weight, min_weight):
         self.num_state = num_state
         self.num_action = num_action
         self.discrete_action = discrete_action
 
+        # for genome
+        self.mutate_sigma = mutate_sigma
+        self.max_weight = max_weight
+        self.min_weight = min_weight
+
     def init_genes(self, innov_num_iterator):
-        self.genome = Genome(self.num_state, self.num_action, innov_num_iterator)
+        self.genome = Genome(self.num_state, self.num_action, self.mutate_sigma, self.max_weight, self.min_weight, innov_num_iterator)
         self.model = FeedForwardNetwork.create(self.genome)
 
     def forward(self, x):
@@ -43,6 +48,10 @@ class NeatFeedForward(BaseNetwork):
 
     def update_model(self, nodes, connections_by_innov):
         self.genome.update_genome(nodes, connections_by_innov)
+        self.model = FeedForwardNetwork.create(self.genome)
+
+    def mutate(self):
+        self.genome.mutate_weight()
         self.model = FeedForwardNetwork.create(self.genome)
 
 

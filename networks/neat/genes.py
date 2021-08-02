@@ -1,11 +1,18 @@
 import numpy as np
+import random
 from copy import deepcopy
+
+import numpy as np
 
 ##### Genome #####
 
 
 class Genome:
-    def __init__(self, num_state, num_action, innov_num_iterator, mu=0.0, std=1.0):
+    def __init__(self, num_state, num_action, mutate_sigma, max_weight, min_weight, innov_num_iterator, mu=0.0, std=1.0):
+        self.mutate_sigma = mutate_sigma
+        self.max_weight = max_weight
+        self.min_weight = min_weight
+
         self.node_genes = NodeGenes(num_state, num_action)
         self.connect_genes = ConnectGenes()
         # initialize connect genes
@@ -40,6 +47,18 @@ class Genome:
 
     def get_innov_num_keys(self):
         return list(self.connect_genes.genes_by_innov.keys())
+
+    def mutate_weight(self):
+        connect_genes = self.get_connect_genes()
+        for gene in connect_genes.values():
+            r = random.random()
+            if r < 0.8:
+                r2 = random.random()
+                if r2 < 0.9:
+                    # uniform perturb originally but I didn't understand how to implement it.
+                    gene.weight += np.random.normal(0, self.mutate_sigma)
+                else:
+                    gene.weight = np.random.uniform(self.min_weight, self.max_weight)
 
 
 ###### Node #######

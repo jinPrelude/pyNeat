@@ -25,7 +25,14 @@ def build_network(config):
             config["gru"],
         )
     if config["name"] == "NeatFeedForward":
-        return NeatFeedForward(config["num_state"], config["num_action"], config["discrete_action"])
+        return NeatFeedForward(
+            config["num_state"],
+            config["num_action"],
+            config["discrete_action"],
+            config["mutate_sigma"],
+            config["max_weight"],
+            config["min_weight"],
+        )
 
 
 def build_loop(
@@ -66,8 +73,6 @@ def build_loop(
         strategy = Neat(
             strategy_cfg["init_sigma"],
             strategy_cfg["sigma_decay"],
-            strategy_cfg["max_weight"],
-            strategy_cfg["min_weight"],
             strategy_cfg["elite_num"],
             strategy_cfg["offspring_num"],
         )

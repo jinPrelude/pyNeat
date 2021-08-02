@@ -33,6 +33,7 @@ def crossover_offsprings(survival_ratio, sorted_parents, sorted_rewards, offspri
     return offsprings
 
 
+# TODO: Put crossover function inside the NEAT Class
 def _crossover(parent1, parent2, superior):
     assert superior in ["p1", "p2", "draw"]
     child = deepcopy(parent1)
@@ -54,6 +55,12 @@ def _crossover(parent1, parent2, superior):
 
     child.update_model(child_nodes, child_connections)
     return child
+
+
+def mutate_offsprings(offsprings):
+    for off in offsprings:
+        off.mutate()
+    return offsprings
 
 
 def find_required_nodes(innov_nums, network):

@@ -13,8 +13,6 @@ class Neat(BaseOffspringStrategy):
         self,
         init_sigma,
         sigma_decay,
-        max_weight,
-        min_weight,
         elite_num,
         offspring_num,
         crossover_offspring_ratio=0.75,
@@ -25,8 +23,6 @@ class Neat(BaseOffspringStrategy):
         self.offspring_num = offspring_num
         self.init_sigma = init_sigma
         self.sigma_decay = sigma_decay
-        self.max_weight = max_weight
-        self.min_weight = min_weight
         self.elite_num = elite_num
         self.curr_sigma = self.init_sigma
         self.crossover_offspring_ratio = crossover_offspring_ratio
@@ -68,13 +64,10 @@ class Neat(BaseOffspringStrategy):
         # mutation = self.mutate(self.elite_num, self.offsprings, rewards, mutate_only_num)
         # self.offsprings = champions + crossover + mutation
         crossover = crossover_offsprings(self.survival_ratio, self.offsprings, rewards, self.offspring_num - self.champions_num)
+        crossover = mutate_offsprings(crossover)
         self.offsprings = crossover + champions
         offspring_group = [wrap_agentid(self.agent_ids, off) for off in self.offsprings]
         return offspring_group, best_reward, 0
-
-    @staticmethod
-    def mutate(elite_num, offsprings, rewards, offspring_num):
-        pass
 
     def get_wandb_cfg(self):
         pass
