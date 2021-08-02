@@ -1,3 +1,5 @@
+# Modified https://github.com/CodeReclaimers/neat-python/blob/master/neat/nn/feed_forward.py.
+
 from abc import *
 import math
 
@@ -13,18 +15,21 @@ class NeatFeedForward(BaseNetwork):
         self.num_action = num_action
         self.discrete_action = discrete_action
 
-        self.genome = Genome(num_state, num_action)
+    def init_genes(self, innov_num_iterator):
+        self.genome = Genome(self.num_state, self.num_action, innov_num_iterator)
         self.model = FeedForwardNetwork.create(self.genome)
 
     def forward(self, x):
         output = self.model.activate(x[0])
-        return np.array(output)
+        if self.discrete_action:
+            output = np.argmax(output)
+        return output
 
     def zero_init(self):
         pass
 
     def normal_init(self, mu, std):
-        self.genome = Genome(self.num_state, self.num_action, mu, std)
+        self.genome.normal_init(mu, std)
         self.model = FeedForwardNetwork.create(self.genome)
 
     def reset(self):
@@ -35,6 +40,10 @@ class NeatFeedForward(BaseNetwork):
 
     def apply_param(self, param_lst: list):
         pass
+
+    def update_model(self, nodes, connections_by_innov):
+        self.genome.update_genome(nodes, connections_by_innov)
+        self.model = FeedForwardNetwork.create(self.genome)
 
 
 class FeedForwardNetwork(object):
@@ -57,17 +66,19 @@ class FeedForwardNetwork(object):
                 node_inputs.append(self.values[i] * w)
             self.values[node] = act_func(bias + sum(node_inputs))
 
-        return [self.values[i] for i in self.output_nodes]
+        return np.array([self.values[i] for i in self.output_nodes])
 
     @staticmethod
     def create(genome):
         """Receives a genome and returns its phenotype (a FeedForwardNetwork)."""
 
         # Gather expressed connections.
-        connections = [cg.connection for cg in genome.connections.values() if cg.enabled]
-        sensor_nodes = genome.node_genes.get_sensor_nodes()
-        output_nodes = genome.node_genes.get_output_nodes()
+        connect_genes = genome.get_connect_genes(key="connection")
+        connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
+        sensor_nodes = genome.get_sensor_nodes()
+        output_nodes = genome.get_output_nodes()
         layers = feed_forward_layers(sensor_nodes, output_nodes, connections)
+        genome_nodes = genome.get_nodes()
         node_evals = []
         for layer in layers:
             for node in layer:
@@ -76,11 +87,11 @@ class FeedForwardNetwork(object):
                 for conn_key in connections:
                     inode, onode = conn_key
                     if onode == node:
-                        cg = genome.connections[conn_key]
+                        cg = connect_genes[conn_key]
                         inputs.append((inode, cg.weight))
                         node_expr.append("v[{}] * {:.7e}".format(inode, cg.weight))
 
-                ng = genome.nodes[node]
+                ng = genome_nodes[node]
                 activation_function = math.tanh
                 node_evals.append((node, activation_function, ng.bias, inputs))
 

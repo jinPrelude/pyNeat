@@ -1,0 +1,19 @@
+env:
+  name: CartPole-v1
+  max_step: None
+  pomdp: False
+
+network:
+  name: NeatFeedForward
+  num_state: 4
+  num_action: 2
+  discrete_action: True
+
+strategy:
+  name : neat
+  init_sigma: 2
+  sigma_decay: 0.99
+  max_weight: 30.
+  min_weight: -30.
+  elite_num: 2
+  offspring_num: 2400
