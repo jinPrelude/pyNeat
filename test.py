@@ -42,12 +42,11 @@ def main():
         display.start()
 
     network = builder.build_network(config["network"])
-    network.load_state_dict(torch.load(args.ckpt_path))
+    network.load_model(args.ckpt_path)
     for i in range(10):
         models = {}
         for agent_id in agent_ids:
             models[agent_id] = deepcopy(network)
-            models[agent_id].eval()
             models[agent_id].reset()
         obs = env.reset()
 
@@ -59,10 +58,10 @@ def main():
             actions = {}
             for k, model in models.items():
                 s = obs[k]["state"][np.newaxis, ...]
-                actions[k] = model(s)
+                actions[k] = model.forward(s)
             obs, r, done, _ = env.step(actions)
             if "Unity" not in env.name:
-                rgb_array = env.render()
+                rgb_array = env.render(mode="rgb_array")
                 if args.save_gif:
                     ep_render_lst.append(rgb_array)
             episode_reward += r

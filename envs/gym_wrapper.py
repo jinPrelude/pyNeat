@@ -29,6 +29,9 @@ class GymWrapper:
         return_list["0"] = transition
         return return_list
 
+    def seed(self, seed):
+        self.env.seed(seed)
+
     def step(self, action):
         self.curr_step += 1
         return_list = {}

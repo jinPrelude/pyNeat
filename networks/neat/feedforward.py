@@ -1,6 +1,8 @@
 # Modified https://github.com/CodeReclaimers/neat-python/blob/master/neat/nn/feed_forward.py.
 
 from abc import *
+import os
+import pickle
 import math
 
 import numpy as np
@@ -30,9 +32,6 @@ class NeatNetwork(BaseNetwork):
             output = np.argmax(output)
         return output
 
-    def zero_init(self):
-        pass
-
     def normal_init(self, mu, std):
         self.genome.normal_init(mu, std)
         self.model = RecurrentNetwork.create(self.genome)
@@ -40,14 +39,21 @@ class NeatNetwork(BaseNetwork):
     def reset(self):
         self.model.reset()
 
-    def get_param_list(self):
-        pass
-
-    def apply_param(self, param_lst: list):
-        pass
-
     def update_model(self, nodes, connections):
         self.genome.update_genome(nodes, connections)
+        self.model = RecurrentNetwork.create(self.genome)
+
+    def save_model(self, save_path, model_name):
+        model_name += ".pkl"
+        save_path = os.path.join(save_path, model_name)
+        with open(save_path, "wb") as f:
+            pickle.dump([self.genome, self.model.node_evals], f, pickle.HIGHEST_PROTOCOL)
+        return save_path
+
+    def load_model(self, path):
+        with open(path, "rb") as f:
+            test = pickle.load(f)
+        self.genome = test[0]
         self.model = RecurrentNetwork.create(self.genome)
 
     def mutate(self):

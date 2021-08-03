@@ -43,7 +43,6 @@ class ESLoop(BaseESLoop):
         self.agent_ids = agent_ids
         self.env_name = env_name
 
-        self.network.zero_init()
         self.ep5_rewards = deque(maxlen=5)
         self.reset_worker_status()
         # create log directory
@@ -130,8 +129,8 @@ class ESLoop(BaseESLoop):
             if ep_num % self.save_model_period == 0:
                 if self.log:
                     if "Unity" in self.env_name:
-                        save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
-                        torch.save(elite.state_dict(), save_pth)
+                        save_pth = self.save_dir + "/saved_models/"
+                        elite.save_model(save_pth, f"ep_{ep_num}")
                     else:
                         test_log_model(self.save_dir, self.env_cfg, elite)
         self.terminate_all_workers()
@@ -145,7 +144,6 @@ def test_log_model(save_dir, env_cfg, elite_network):
     models = {}
     for agent_id in agent_ids:
         models[agent_id] = deepcopy(elite_network)
-        models[agent_id].eval()
         models[agent_id].reset()
     obs = env.reset()
 
@@ -157,7 +155,7 @@ def test_log_model(save_dir, env_cfg, elite_network):
         actions = {}
         for k, model in models.items():
             s = obs[k]["state"][np.newaxis, ...]
-            actions[k] = model(s)
+            actions[k] = model.forward(s)
         obs, r, done, _ = env.step(actions)
         rgb_array = env.render(mode="rgb_array")
         ep_render_lst.append(rgb_array)
@@ -166,8 +164,8 @@ def test_log_model(save_dir, env_cfg, elite_network):
     clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
     clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
     wandb.save(os.path.join(save_dir, "play.gif"))
-    torch.save(elite_network.state_dict(), os.path.join(save_dir, "elite.pt"))
-    wandb.save(os.path.join(save_dir, "elite.pt"))
+    save_path = elite_network.save_model(save_dir, "elite")
+    wandb.save(save_path)
 
     wandb.log({"test_reward": episode_reward})
 

@@ -3,16 +3,26 @@ from abc import *
 from torch import nn
 
 
-class BaseNetwork(nn.Module):
+class BaseNetwork(metaclass=ABCMeta):
     def __init__(self):
         super(BaseNetwork, self).__init__()
 
     @abstractmethod
-    def zero_init(self):
+    def reset(self):
         pass
 
     @abstractmethod
-    def reset(self):
+    def save_model(self, path, model_name):
+        pass
+
+    @abstractmethod
+    def load_model(self, path):
+        pass
+
+
+class EvolutionNetwork(BaseNetwork, nn.Module):
+    @abstractmethod
+    def zero_init(self):
         pass
 
     @abstractmethod

@@ -29,13 +29,14 @@ class Neat(BaseOffspringStrategy):
         self.champions_num = champions_num
         self.survival_ratio = survival_ratio
 
+        self.elite_model = None
         self.offsprings = []
 
     def _gen_offsprings(self, agent_ids, elite_models, elite_num, offspring_num, curr_sigma):
         pass
 
     def get_elite_model(self):
-        pass
+        return self.elite_model
 
     def init_offspring(self, network: torch.nn.Module, agent_ids: list):
         self.agent_ids = agent_ids
@@ -53,6 +54,7 @@ class Neat(BaseOffspringStrategy):
         offspring_rank_id = np.flip(np.argsort(rewards))
         self.offsprings = [self.offsprings[i] for i in offspring_rank_id]
         rewards = [rewards[i] for i in offspring_rank_id]
+        self.elite_model = self.offsprings[0]
 
         crossover_num = round(self.crossover_offspring_ratio * self.offspring_num)
         mutate_only_num = self.offspring_num - crossover_num
