@@ -1,12 +1,10 @@
 import numpy as np
 import random
-from copy import deepcopy
 
 import numpy as np
 
+
 ##### Genome #####
-
-
 class Genome:
     def __init__(self, num_state, num_action, mutate_sigma, max_weight, min_weight, mu=0.0, std=1.0):
         self.mutate_sigma = mutate_sigma
@@ -44,19 +42,24 @@ class Genome:
     def mutate_weight(self):
         connect_genes = self.get_connect_genes()
         for gene in connect_genes.values():
-            r = random.random()
-            if r < 0.8:
-                r2 = random.random()
-                if r2 < 0.9:
+            if random.random() < 0.8:
+                if random.random() < 0.9:
                     # uniform perturb originally but I didn't understand how to implement it.
                     gene.weight += np.random.normal(0, self.mutate_sigma)
                 else:
                     gene.weight = np.random.uniform(self.min_weight, self.max_weight)
 
+    def mutate_add_node(self):
+        if random.random() < 0.2:
+            connect_genes = self.get_connect_genes()
+            conn_to_split = random.choice(list(connect_genes.values()))
+            new_node_num = self.node_genes.add_node("hidden")
+            conn_to_split.enabled = False
+            self.connect_genes.add_connection(conn_to_split.in_node_num, new_node_num, 1.0, True)
+            self.connect_genes.add_connection(new_node_num, conn_to_split.out_node_num, 1.0, True)
+
 
 ###### Node #######
-
-
 class NodeGenes:
     def __init__(self, num_state, num_action) -> None:
         self.get_node_num = iter(range(100000000))
@@ -100,8 +103,6 @@ class Node:
 
 
 ###### Connect #######
-
-
 class ConnectGenes:
     def __init__(self) -> None:
         self.connections = {}

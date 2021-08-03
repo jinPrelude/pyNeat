@@ -29,22 +29,46 @@ def crossover_offsprings(survival_ratio, sorted_parents, sorted_rewards, offspri
 # TODO: Put crossover function inside the NEAT Class
 def _crossover(parent1, parent2, superior):
     assert superior in ["p1", "p2", "draw"]
-    child = deepcopy(parent1)
+
+    p1_connect_genes = parent1.genome.get_connect_genes()
+    p2_connect_genes = parent2.genome.get_connect_genes()
     p1_connections = set(parent1.genome.get_connect_genes().keys())
     p2_connections = set(parent2.genome.get_connect_genes().keys())
 
+    child = deepcopy(parent1)
+    child_nodes = {}
+    child_connections = {}
     # matching genes crossover
     matching_connections = p1_connections & p2_connections
-    child_nodes = find_required_nodes(matching_connections, parent1)
-    child_connections = {}
-    p1_connect_genes = parent1.genome.get_connect_genes()
-    p2_connect_genes = parent2.genome.get_connect_genes()
+    child_nodes.update(find_required_nodes(matching_connections, parent1.genome))
     for connection in matching_connections:
         rand_num = random.random()
         if rand_num > 0.5:
             child_connections[connection] = p1_connect_genes[connection]
         else:
             child_connections[connection] = p2_connect_genes[connection]
+
+    # disjoint & excess crossover(treat the two equally).
+    def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
+        parent_connect_genes = parent_genome.get_connect_genes()
+        child_nodes.update(find_required_nodes(connection_keys, parent_genome))
+        for connection in connection_keys:
+            child_connections[connection] = parent_connect_genes[connection]
+        return child_nodes, child_connections
+
+    p1_differences = p1_connections - p2_connections
+    p2_differences = p2_connections - p1_connections
+    if superior == "p1":
+        child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, parent1.genome)
+    elif superior == "p2":
+        child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p2_differences, parent2.genome)
+    else:
+        for connection in p1_differences:
+            if random.random() < 0.5:
+                child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, parent1.genome)
+        for connection in p2_differences:
+            if random.random() < 0.5:
+                child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p2_differences, parent2.genome)
 
     child.update_model(child_nodes, child_connections)
     return child
@@ -56,17 +80,16 @@ def mutate_offsprings(offsprings):
     return offsprings
 
 
-def find_required_nodes(connections, network):
+def find_required_nodes(connections, genome):
     assert type(connections) in [list, set]
-    network_nodes = network.genome.get_nodes()
+    network_nodes = genome.get_nodes()
     node_nums = set()
     nodes = {}
-    connect_genes = network.genome.get_connect_genes()
+    connect_genes = genome.get_connect_genes()
     for connection in connections:
         gene = connect_genes[connection]
         node_nums.add(gene.in_node_num)
         node_nums.add(gene.out_node_num)
-    network
     for node_num in node_nums:
         nodes[node_num] = network_nodes[node_num]
     return nodes

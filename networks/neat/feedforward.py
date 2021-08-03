@@ -52,6 +52,7 @@ class NeatNetwork(BaseNetwork):
 
     def mutate(self):
         self.genome.mutate_weight()
+        self.genome.mutate_add_node()
         self.model = RecurrentNetwork.create(self.genome)
 
 
