@@ -5,13 +5,6 @@ import numpy as np
 import sys
 
 
-def count(start=0, step=1):
-    n = start
-    while True:
-        yield n
-        n += step
-
-
 def crossover_offsprings(survival_ratio, sorted_parents, sorted_rewards, offspring_num):
     offsprings = []
     parent_num = round(survival_ratio * len(sorted_parents))
@@ -37,21 +30,21 @@ def crossover_offsprings(survival_ratio, sorted_parents, sorted_rewards, offspri
 def _crossover(parent1, parent2, superior):
     assert superior in ["p1", "p2", "draw"]
     child = deepcopy(parent1)
-    p1_innov_nums = set(parent1.genome.get_innov_num_keys())
-    p2_innov_nums = set(parent2.genome.get_innov_num_keys())
+    p1_connections = set(parent1.genome.get_connect_genes().keys())
+    p2_connections = set(parent2.genome.get_connect_genes().keys())
 
     # matching genes crossover
-    matching_innov_nums = p1_innov_nums & p2_innov_nums
-    child_nodes = find_required_nodes(matching_innov_nums, parent1)
+    matching_connections = p1_connections & p2_connections
+    child_nodes = find_required_nodes(matching_connections, parent1)
     child_connections = {}
-    p1_connect_genes = parent1.genome.get_connect_genes(key="innov_num")
-    p2_connect_genes = parent2.genome.get_connect_genes(key="innov_num")
-    for innov_num in matching_innov_nums:
+    p1_connect_genes = parent1.genome.get_connect_genes()
+    p2_connect_genes = parent2.genome.get_connect_genes()
+    for connection in matching_connections:
         rand_num = random.random()
         if rand_num > 0.5:
-            child_connections[innov_num] = p1_connect_genes[innov_num]
+            child_connections[connection] = p1_connect_genes[connection]
         else:
-            child_connections[innov_num] = p2_connect_genes[innov_num]
+            child_connections[connection] = p2_connect_genes[connection]
 
     child.update_model(child_nodes, child_connections)
     return child
@@ -63,14 +56,14 @@ def mutate_offsprings(offsprings):
     return offsprings
 
 
-def find_required_nodes(innov_nums, network):
-    assert type(innov_nums) in [list, set]
+def find_required_nodes(connections, network):
+    assert type(connections) in [list, set]
     network_nodes = network.genome.get_nodes()
     node_nums = set()
     nodes = {}
-    connect_genes = network.genome.get_connect_genes(key="innov_num")
-    for innov_num in innov_nums:
-        gene = connect_genes[innov_num]
+    connect_genes = network.genome.get_connect_genes()
+    for connection in connections:
+        gene = connect_genes[connection]
         node_nums.add(gene.in_node_num)
         node_nums.add(gene.out_node_num)
     network

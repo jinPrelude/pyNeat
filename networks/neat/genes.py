@@ -8,7 +8,7 @@ import numpy as np
 
 
 class Genome:
-    def __init__(self, num_state, num_action, mutate_sigma, max_weight, min_weight, innov_num_iterator, mu=0.0, std=1.0):
+    def __init__(self, num_state, num_action, mutate_sigma, max_weight, min_weight, mu=0.0, std=1.0):
         self.mutate_sigma = mutate_sigma
         self.max_weight = max_weight
         self.min_weight = min_weight
@@ -18,16 +18,16 @@ class Genome:
         # initialize connect genes
         sensor_nodes = self.get_sensor_nodes()
         output_nodes = self.get_output_nodes()
-        self.connect_genes.init_connection(sensor_nodes, output_nodes, innov_num_iterator, mu, std)
+        self.connect_genes.init_connection(sensor_nodes, output_nodes, mu, std)
 
     def normal_init(self, mu, std):
         connect_genes = self.get_connect_genes()
         for gene in connect_genes.values():
             gene.weight = np.random.normal(mu, std)
 
-    def update_genome(self, nodes, connections_by_innov):
+    def update_genome(self, nodes, connections):
         self.node_genes.update(nodes)
-        self.connect_genes.update_by_innov(connections_by_innov)
+        self.connect_genes.update(connections)
 
     def get_nodes(self):
         return self.node_genes.nodes
@@ -38,15 +38,8 @@ class Genome:
     def get_output_nodes(self):
         return self.node_genes.output_node_num_list
 
-    def get_connect_genes(self, key="innov_num"):
-        assert key in ["innov_num", "connection"]
-        if key == "innov_num":
-            return self.connect_genes.genes_by_innov
-        else:
-            return self.connect_genes.genes_by_connect
-
-    def get_innov_num_keys(self):
-        return list(self.connect_genes.genes_by_innov.keys())
+    def get_connect_genes(self):
+        return self.connect_genes.connections
 
     def mutate_weight(self):
         connect_genes = self.get_connect_genes()
@@ -111,33 +104,25 @@ class Node:
 
 class ConnectGenes:
     def __init__(self) -> None:
-        self.genes_by_connect = {}
-        self.genes_by_innov = {}
+        self.connections = {}
 
-    def init_connection(self, sensor_nodes: list, output_nodes: list, innov_num_iterator, mu=0.0, std=1.0):
+    def init_connection(self, sensor_nodes: list, output_nodes: list, mu=0.0, std=1.0):
         for sensor_n in sensor_nodes:
             for output_n in output_nodes:
                 weight = np.random.normal(mu, std)
-                innov_num = next(innov_num_iterator)
-                self.add_connection(sensor_n, output_n, weight, True, innov_num)
+                self.add_connection(sensor_n, output_n, weight, True)
 
-    def add_connection(self, in_node_num, out_node_num, weight, enabled, innov_num) -> int:
-        self.genes_by_connect[(in_node_num, out_node_num)] = Connect(in_node_num, out_node_num, weight, enabled, innov_num)
-        self.genes_by_innov[innov_num] = self.genes_by_connect[(in_node_num, out_node_num)]
+    def add_connection(self, in_node_num, out_node_num, weight, enabled) -> int:
+        self.connections[(in_node_num, out_node_num)] = Connect(in_node_num, out_node_num, weight, enabled)
 
-    def update_by_innov(self, genes_by_innov):
-        self.genes_by_innov = deepcopy(genes_by_innov)
-        self.genes_by_connect = {}
-        for gene in self.genes_by_innov.values():
-            connection = gene.connection
-            self.genes_by_connect[connection] = gene
+    def update(self, connections):
+        self.connections = connections
 
 
 class Connect:
-    def __init__(self, in_node_num, out_node_num, weight, enabled, innov_num) -> None:
+    def __init__(self, in_node_num, out_node_num, weight, enabled) -> None:
         self.connection = (in_node_num, out_node_num)
         self.in_node_num = in_node_num
         self.out_node_num = out_node_num
         self.weight = weight
         self.enabled = enabled
-        self.innov_num = innov_num

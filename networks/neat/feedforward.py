@@ -20,8 +20,8 @@ class NeatNetwork(BaseNetwork):
         self.max_weight = max_weight
         self.min_weight = min_weight
 
-    def init_genes(self, innov_num_iterator):
-        self.genome = Genome(self.num_state, self.num_action, self.mutate_sigma, self.max_weight, self.min_weight, innov_num_iterator)
+    def init_genes(self):
+        self.genome = Genome(self.num_state, self.num_action, self.mutate_sigma, self.max_weight, self.min_weight)
         self.model = RecurrentNetwork.create(self.genome)
 
     def forward(self, x):
@@ -46,8 +46,8 @@ class NeatNetwork(BaseNetwork):
     def apply_param(self, param_lst: list):
         pass
 
-    def update_model(self, nodes, connections_by_innov):
-        self.genome.update_genome(nodes, connections_by_innov)
+    def update_model(self, nodes, connections):
+        self.genome.update_genome(nodes, connections)
         self.model = RecurrentNetwork.create(self.genome)
 
     def mutate(self):
@@ -97,7 +97,7 @@ class RecurrentNetwork(object):
     @staticmethod
     def create(genome):
         """Receives a genome and returns its phenotype (a RecurrentNetwork)."""
-        connect_genes = genome.get_connect_genes(key="connection")
+        connect_genes = genome.get_connect_genes()
         connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
         sensor_nodes = genome.get_sensor_nodes()
         output_nodes = genome.get_output_nodes()

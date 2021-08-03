@@ -29,8 +29,6 @@ class Neat(BaseOffspringStrategy):
         self.champions_num = champions_num
         self.survival_ratio = survival_ratio
 
-        self.innov_num_iterator = count()
-
         self.offsprings = []
 
     def _gen_offsprings(self, agent_ids, elite_models, elite_num, offspring_num, curr_sigma):
@@ -41,7 +39,7 @@ class Neat(BaseOffspringStrategy):
 
     def init_offspring(self, network: torch.nn.Module, agent_ids: list):
         self.agent_ids = agent_ids
-        network.init_genes(self.innov_num_iterator)
+        network.init_genes()
         offspring_group = []
         for _ in range(self.offspring_num):
             offspring = deepcopy(network)
