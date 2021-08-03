@@ -9,7 +9,7 @@ from networks.abstracts import BaseNetwork
 from networks.neat.genes import Genome
 
 
-class NeatFeedForward(BaseNetwork):
+class NeatNetwork(BaseNetwork):
     def __init__(self, num_state, num_action, discrete_action, mutate_sigma, max_weight, min_weight):
         self.num_state = num_state
         self.num_action = num_action
@@ -22,7 +22,7 @@ class NeatFeedForward(BaseNetwork):
 
     def init_genes(self, innov_num_iterator):
         self.genome = Genome(self.num_state, self.num_action, self.mutate_sigma, self.max_weight, self.min_weight, innov_num_iterator)
-        self.model = FeedForwardNetwork.create(self.genome)
+        self.model = RecurrentNetwork.create(self.genome)
 
     def forward(self, x):
         output = self.model.activate(x[0])
@@ -35,10 +35,10 @@ class NeatFeedForward(BaseNetwork):
 
     def normal_init(self, mu, std):
         self.genome.normal_init(mu, std)
-        self.model = FeedForwardNetwork.create(self.genome)
+        self.model = RecurrentNetwork.create(self.genome)
 
     def reset(self):
-        pass
+        self.model.reset()
 
     def get_param_list(self):
         pass
@@ -48,63 +48,85 @@ class NeatFeedForward(BaseNetwork):
 
     def update_model(self, nodes, connections_by_innov):
         self.genome.update_genome(nodes, connections_by_innov)
-        self.model = FeedForwardNetwork.create(self.genome)
+        self.model = RecurrentNetwork.create(self.genome)
 
     def mutate(self):
         self.genome.mutate_weight()
-        self.model = FeedForwardNetwork.create(self.genome)
+        self.model = RecurrentNetwork.create(self.genome)
 
 
-class FeedForwardNetwork(object):
+class RecurrentNetwork(object):
     def __init__(self, inputs, outputs, node_evals):
         self.input_nodes = inputs
         self.output_nodes = outputs
         self.node_evals = node_evals
-        self.values = dict((key, 0.0) for key in inputs + outputs)
+
+        self.values = [{}, {}]
+        for v in self.values:
+            for k in list(inputs) + list(outputs):
+                v[k] = 0.0
+
+            for node, _, _, links in self.node_evals:
+                v[node] = 0.0
+                for i, w in links:
+                    v[i] = 0.0
+        self.active = 0
+
+    def reset(self):
+        self.values = [dict((k, 0.0) for k in v) for v in self.values]
+        self.active = 0
 
     def activate(self, inputs):
         if len(self.input_nodes) != len(inputs):
             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
 
-        for k, v in zip(self.input_nodes, inputs):
-            self.values[k] = v
+        ivalues = self.values[self.active]
+        ovalues = self.values[1 - self.active]
+        self.active = 1 - self.active
 
-        for node, act_func, bias, links in self.node_evals:
-            node_inputs = []
-            for i, w in links:
-                node_inputs.append(self.values[i] * w)
-            self.values[node] = act_func(bias + sum(node_inputs))
+        for i, v in zip(self.input_nodes, inputs):
+            ivalues[i] = v
+            ovalues[i] = v
 
-        return np.array([self.values[i] for i in self.output_nodes])
+        for node, activation, bias, links in self.node_evals:
+            node_inputs = [ivalues[i] * w for i, w in links]
+            ovalues[node] = activation(bias + sum(node_inputs))
+
+        return np.array([ovalues[i] for i in self.output_nodes])
 
     @staticmethod
     def create(genome):
-        """Receives a genome and returns its phenotype (a FeedForwardNetwork)."""
-
-        # Gather expressed connections.
+        """Receives a genome and returns its phenotype (a RecurrentNetwork)."""
         connect_genes = genome.get_connect_genes(key="connection")
         connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
         sensor_nodes = genome.get_sensor_nodes()
         output_nodes = genome.get_output_nodes()
-        layers = feed_forward_layers(sensor_nodes, output_nodes, connections)
+        required = required_for_output(sensor_nodes, output_nodes, connections)
+
+        # Gather inputs and expressed connections.
+        node_inputs = {}
+        for cg in connect_genes.values():
+            if not cg.enabled:
+                continue
+
+            in_node, out_node = cg.connection
+            if out_node not in required and in_node not in required:
+                continue
+
+            if out_node not in node_inputs:
+                node_inputs[out_node] = [(in_node, cg.weight)]
+            else:
+                node_inputs[out_node].append((in_node, cg.weight))
+
         genome_nodes = genome.get_nodes()
         node_evals = []
-        for layer in layers:
-            for node in layer:
-                inputs = []
-                node_expr = []  # currently unused
-                for conn_key in connections:
-                    inode, onode = conn_key
-                    if onode == node:
-                        cg = connect_genes[conn_key]
-                        inputs.append((inode, cg.weight))
-                        node_expr.append("v[{}] * {:.7e}".format(inode, cg.weight))
+        for node_key, inputs in node_inputs.items():
+            node = genome_nodes[node_key]
+            activation_function = math.tanh
+            # aggregation_function = genome_config.aggregation_function_defs.get(node.aggregation) # summation
+            node_evals.append((node_key, activation_function, node.bias, inputs))
 
-                ng = genome_nodes[node]
-                activation_function = math.tanh
-                node_evals.append((node, activation_function, ng.bias, inputs))
-
-        return FeedForwardNetwork(sensor_nodes, output_nodes, node_evals)
+        return RecurrentNetwork(sensor_nodes, output_nodes, node_evals)
 
 
 def required_for_output(inputs, outputs, connections):
@@ -171,3 +193,55 @@ def feed_forward_layers(inputs, outputs, connections):
         s = s.union(t)
 
     return layers
+
+
+# class FeedForwardNetwork(object):
+#     def __init__(self, inputs, outputs, node_evals):
+#         self.input_nodes = inputs
+#         self.output_nodes = outputs
+#         self.node_evals = node_evals
+#         self.values = dict((key, 0.0) for key in inputs + outputs)
+
+#     def activate(self, inputs):
+#         if len(self.input_nodes) != len(inputs):
+#             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
+
+#         for k, v in zip(self.input_nodes, inputs):
+#             self.values[k] = v
+
+#         for node, act_func, bias, links in self.node_evals:
+#             node_inputs = []
+#             for i, w in links:
+#                 node_inputs.append(self.values[i] * w)
+#             self.values[node] = act_func(bias + sum(node_inputs))
+
+#         return np.array([self.values[i] for i in self.output_nodes])
+
+#     @staticmethod
+#     def create(genome):
+#         """Receives a genome and returns its phenotype (a FeedForwardNetwork)."""
+
+#         # Gather expressed connections.
+#         connect_genes = genome.get_connect_genes(key="connection")
+#         connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
+#         sensor_nodes = genome.get_sensor_nodes()
+#         output_nodes = genome.get_output_nodes()
+#         layers = feed_forward_layers(sensor_nodes, output_nodes, connections)
+#         genome_nodes = genome.get_nodes()
+#         node_evals = []
+#         for layer in layers:
+#             for node in layer:
+#                 inputs = []
+#                 node_expr = []  # currently unused
+#                 for conn_key in connections:
+#                     inode, onode = conn_key
+#                     if onode == node:
+#                         cg = connect_genes[conn_key]
+#                         inputs.append((inode, cg.weight))
+#                         node_expr.append("v[{}] * {:.7e}".format(inode, cg.weight))
+
+#                 ng = genome_nodes[node]
+#                 activation_function = math.tanh
+#                 node_evals.append((node, activation_function, ng.bias, inputs))
+
+#         return FeedForwardNetwork(sensor_nodes, output_nodes, node_evals)

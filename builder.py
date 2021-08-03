@@ -1,6 +1,6 @@
 from envs import *
 from networks.neural_network import *
-from networks.neat.feedforward import NeatFeedForward
+from networks.neat.feedforward import NeatNetwork
 from learning_strategies import *
 
 
@@ -24,8 +24,8 @@ def build_network(config):
             config["discrete_action"],
             config["gru"],
         )
-    if config["name"] == "NeatFeedForward":
-        return NeatFeedForward(
+    if config["name"] == "NeatNetwork":
+        return NeatNetwork(
             config["num_state"],
             config["num_action"],
             config["discrete_action"],

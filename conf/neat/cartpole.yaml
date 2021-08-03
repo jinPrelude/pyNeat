@@ -4,7 +4,7 @@ env:
   pomdp: False
 
 network:
-  name: NeatFeedForward
+  name: NeatNetwork
   num_state: 4
   num_action: 2
   discrete_action: True
