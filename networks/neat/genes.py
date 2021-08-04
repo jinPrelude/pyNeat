@@ -14,8 +14,8 @@ class Genome:
         self.node_genes = NodeGenes(num_state, num_action)
         self.connect_genes = ConnectGenes()
         # initialize connect genes
-        sensor_nodes = self.get_sensor_nodes()
-        output_nodes = self.get_output_nodes()
+        sensor_nodes = self.get_node_keys("sensor")
+        output_nodes = self.get_node_keys("output")
         self.connect_genes.init_connection(sensor_nodes, output_nodes, mu, std)
 
     def normal_init(self, mu, std):
@@ -30,14 +30,15 @@ class Genome:
     def get_nodes(self):
         return self.node_genes.nodes
 
-    def get_sensor_nodes(self):
-        return self.node_genes.sensor_node_num_list
-
-    def get_output_nodes(self):
-        return self.node_genes.output_node_num_list
-
     def get_connect_genes(self):
         return self.connect_genes.connections
+
+    def get_node_keys(self, node_type=None):
+        assert node_type in [None, "all", "sensor", "output", "hidden"]
+        if node_type in [None, "all"]:
+            return list(self.node_genes.nodes.keys())
+        else:
+            return self.node_genes.node_list_by_type[node_type]
 
     def mutate_weight(self):
         connect_genes = self.get_connect_genes()
@@ -50,7 +51,7 @@ class Genome:
                     gene.weight = np.random.uniform(self.min_weight, self.max_weight)
 
     def mutate_add_node(self):
-        if random.random() < 0.2:
+        if random.random() < 0.3:
             connect_genes = self.get_connect_genes()
             conn_to_split = random.choice(list(connect_genes.values()))
             new_node_num = self.node_genes.add_node("hidden")
@@ -58,37 +59,50 @@ class Genome:
             self.connect_genes.add_connection(conn_to_split.in_node_num, new_node_num, 1.0, True)
             self.connect_genes.add_connection(new_node_num, conn_to_split.out_node_num, 1.0, True)
 
+    def mutate_add_connection(self):
+        if random.random() < 0.3:
+            output_node_keys = self.get_node_keys("output")
+            hidden_node_keys = self.get_node_keys("hidden")
+            # print("mutate_add_connection: output_node_keys: ", output_node_keys)
+            # print("mutate_add_connection: hidden_node_keys: ", hidden_node_keys)
+            output_node_candidates = output_node_keys + hidden_node_keys
+            output_node_num = random.choice(output_node_candidates)
+            input_node_candidates = self.get_node_keys("all")
+            # print("mutate_add_connection: all nodes: ", input_node_candidates)
+            input_node_num = random.choice(input_node_candidates)
+            connections = self.get_connect_genes()
+            if (input_node_num, output_node_num) in connections.keys():
+                return
+            elif input_node_num in output_node_keys and output_node_num in output_node_keys:
+                return
+            self.connect_genes.add_connection(input_node_num, output_node_num)
+            # print("mutate_add_connection: input_node: ", input_node_num, "\toutput: node: ", output_node_num)
+
 
 ###### Node #######
 class NodeGenes:
     def __init__(self, num_state, num_action) -> None:
         self.get_node_num = iter(range(100000000))
         self.nodes = {}
-        self.sensor_node_num_list = []
-        self.output_node_num_list = []
+        self.node_list_by_type = {"sensor": [], "output": [], "hidden": []}
         for _ in range(num_state):
-            node_num = self.add_node("sensor")
-            self.sensor_node_num_list.append(node_num)
+            self.add_node("sensor")
         for _ in range(num_action):
-            node_num = self.add_node("output")
-            self.output_node_num_list.append(node_num)
+            self.add_node("output")
 
     def add_node(self, node_type: str, bias=None) -> int:
         node_num = next(self.get_node_num)
         self.nodes[node_num] = Node(node_num, node_type, bias)
+        self.node_list_by_type[node_type].append(node_num)
         return node_num
 
     def update(self, nodes):
         assert type(nodes) == dict
         assert type(nodes[0]) == Node
         self.nodes = nodes
-        self.sensor_node_num_list = []
-        self.output_node_num_list = []
+        self.node_list_by_type = {"sensor": [], "output": [], "hidden": []}
         for node in self.nodes.values():
-            if node.type == "sensor":
-                self.sensor_node_num_list.append(node.num)
-            elif node.type == "output":
-                self.output_node_num_list.append(node.num)
+            self.node_list_by_type[node.type].append(node.num)
 
 
 class Node:
@@ -106,14 +120,20 @@ class Node:
 class ConnectGenes:
     def __init__(self) -> None:
         self.connections = {}
+        self.init_mu = None
+        self.init_std = None
 
     def init_connection(self, sensor_nodes: list, output_nodes: list, mu=0.0, std=1.0):
+        self.init_mu = mu
+        self.init_std = std
         for sensor_n in sensor_nodes:
             for output_n in output_nodes:
-                weight = np.random.normal(mu, std)
-                self.add_connection(sensor_n, output_n, weight, True)
+                self.add_connection(sensor_n, output_n)
 
-    def add_connection(self, in_node_num, out_node_num, weight, enabled) -> int:
+    def add_connection(self, in_node_num, out_node_num, weight=None, enabled=True) -> int:
+        if weight is None:
+            assert self.init_mu is not None, "init_connection() required to be called first."
+            weight = np.random.normal(self.init_mu, self.init_std)
         self.connections[(in_node_num, out_node_num)] = Connect(in_node_num, out_node_num, weight, enabled)
 
     def update(self, connections):

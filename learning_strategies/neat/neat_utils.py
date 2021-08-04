@@ -38,6 +38,7 @@ def _crossover(parent1, parent2, superior):
     child = deepcopy(parent1)
     child_nodes = {}
     child_connections = {}
+
     # matching genes crossover
     matching_connections = p1_connections & p2_connections
     child_nodes.update(find_required_nodes(matching_connections, parent1.genome))
@@ -47,7 +48,9 @@ def _crossover(parent1, parent2, superior):
             child_connections[connection] = p1_connect_genes[connection]
         else:
             child_connections[connection] = p2_connect_genes[connection]
-
+        if p1_connect_genes[connection].enabled == False and p2_connect_genes[connection].enabled == False:
+            if random.random() < 0.25:
+                child_connections[connection].enabled = True
     # disjoint & excess crossover(treat the two equally).
     def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
         parent_connect_genes = parent_genome.get_connect_genes()
@@ -71,6 +74,7 @@ def _crossover(parent1, parent2, superior):
                 child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p2_differences, parent2.genome)
 
     child.update_model(child_nodes, child_connections)
+    child.check_genome_model_synced()
     return child
 
 

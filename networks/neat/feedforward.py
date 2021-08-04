@@ -7,6 +7,12 @@ import math
 
 import numpy as np
 
+# importing networkx
+import networkx as nx
+
+# importing matplotlib.pyplot
+import matplotlib.pyplot as plt
+
 from networks.abstracts import BaseNetwork
 from networks.neat.genes import Genome
 
@@ -44,11 +50,13 @@ class NeatNetwork(BaseNetwork):
         self.model = RecurrentNetwork.create(self.genome)
 
     def save_model(self, save_path, model_name):
-
-        model_name += ".pkl"
         save_path = os.path.join(save_path, model_name)
-        with open(save_path, "wb") as f:
+        if not os.path.isdir(save_path):
+            os.makedirs(save_path)
+        save_model_path = os.path.join(save_path, model_name + ".pkl")
+        with open(save_model_path, "wb") as f:
             pickle.dump(self.genome, f, pickle.HIGHEST_PROTOCOL)
+        self._draw_network(save_path, model_name)
         return save_path
 
     def load_model(self, path):
@@ -56,20 +64,74 @@ class NeatNetwork(BaseNetwork):
             self.genome = pickle.load(f)
         self.model = RecurrentNetwork.create(self.genome)
 
+    def _draw_network(self, save_path, model_name):
+        color_map = []
+        connections = self.genome.get_connect_genes()
+        nodes = self.genome.get_nodes()
+
+        g_pos = nx.complete_multipartite_graph()
+        g = nx.DiGraph()
+
+        enabled_nodes = set()
+        for i, connection in enumerate(connections.values()):
+            if connection.enabled:
+                in_node = connection.in_node_num
+                out_node = connection.out_node_num
+                g.add_edge(in_node, out_node)
+                g_pos.add_edge(in_node, out_node)
+                enabled_nodes.add(in_node)
+                enabled_nodes.add(out_node)
+        for node_num in g_pos.nodes:
+            if nodes[node_num].type == "sensor":
+                color_map.append("#00d2d9")
+                g_pos.nodes[node_num]["type"] = 0
+            elif nodes[node_num].type == "output":
+                color_map.append("#d96900")
+                g_pos.nodes[node_num]["type"] = 2
+            else:
+                color_map.append("#7b00d9")
+                g_pos.nodes[node_num]["type"] = 1
+
+        pos = nx.multipartite_layout(g_pos, subset_key="type")
+        nx.draw(g, with_labels=True, pos=pos, node_color=color_map)
+        esave_path = os.path.join(save_path, model_name + f"_graph_{i}.png")
+        plt.savefig(esave_path)
+        plt.clf()
+
     def check_genome_model_synced(self):
         nodes = self.genome.node_genes.nodes
+        all_node_keys = set(nodes.keys())
         connections = self.genome.connect_genes.connections
+        connections_nodes = set()
+        for input_node_num, output_node_num in connections.keys():
+            connections_nodes.add(input_node_num)
+            connections_nodes.add(output_node_num)
+        enables = []
+        for connection in connections.values():
+            enables.append(connection.enabled)
+        assert sum(enables) != 0
+        assert connections_nodes == all_node_keys
+
         node_evals = self.model.node_evals
+        node_eval_node_nums = set()
         for node in node_evals:
             curr_node, act_func, bias, input_list = node
+            node_eval_node_nums.add(curr_node)
             assert nodes[curr_node].bias == bias
             for input_node_num, weight in input_list:
                 assert connections[(input_node_num, curr_node)].weight == weight
+                node_eval_node_nums.add(input_node_num)
+        assert node_eval_node_nums <= all_node_keys
 
     def mutate(self):
         self.genome.mutate_weight()
+        # enables = []
+        # for g in self.genome.get_connect_genes().values(): enables.append(g.enabled)
+        # print("before add node: ", enables)
         self.genome.mutate_add_node()
+        self.genome.mutate_add_connection()
         self.model = RecurrentNetwork.create(self.genome)
+        self.check_genome_model_synced()
 
 
 class RecurrentNetwork(object):
@@ -116,8 +178,8 @@ class RecurrentNetwork(object):
         """Receives a genome and returns its phenotype (a RecurrentNetwork)."""
         connect_genes = genome.get_connect_genes()
         connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
-        sensor_nodes = genome.get_sensor_nodes()
-        output_nodes = genome.get_output_nodes()
+        sensor_nodes = genome.get_node_keys("sensor")
+        output_nodes = genome.get_node_keys("output")
         required = required_for_output(sensor_nodes, output_nodes, connections)
 
         # Gather inputs and expressed connections.
@@ -210,55 +272,3 @@ def feed_forward_layers(inputs, outputs, connections):
         s = s.union(t)
 
     return layers
-
-
-# class FeedForwardNetwork(object):
-#     def __init__(self, inputs, outputs, node_evals):
-#         self.input_nodes = inputs
-#         self.output_nodes = outputs
-#         self.node_evals = node_evals
-#         self.values = dict((key, 0.0) for key in inputs + outputs)
-
-#     def activate(self, inputs):
-#         if len(self.input_nodes) != len(inputs):
-#             raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
-
-#         for k, v in zip(self.input_nodes, inputs):
-#             self.values[k] = v
-
-#         for node, act_func, bias, links in self.node_evals:
-#             node_inputs = []
-#             for i, w in links:
-#                 node_inputs.append(self.values[i] * w)
-#             self.values[node] = act_func(bias + sum(node_inputs))
-
-#         return np.array([self.values[i] for i in self.output_nodes])
-
-#     @staticmethod
-#     def create(genome):
-#         """Receives a genome and returns its phenotype (a FeedForwardNetwork)."""
-
-#         # Gather expressed connections.
-#         connect_genes = genome.get_connect_genes(key="connection")
-#         connections = [cg.connection for cg in connect_genes.values() if cg.enabled]
-#         sensor_nodes = genome.get_sensor_nodes()
-#         output_nodes = genome.get_output_nodes()
-#         layers = feed_forward_layers(sensor_nodes, output_nodes, connections)
-#         genome_nodes = genome.get_nodes()
-#         node_evals = []
-#         for layer in layers:
-#             for node in layer:
-#                 inputs = []
-#                 node_expr = []  # currently unused
-#                 for conn_key in connections:
-#                     inode, onode = conn_key
-#                     if onode == node:
-#                         cg = connect_genes[conn_key]
-#                         inputs.append((inode, cg.weight))
-#                         node_expr.append("v[{}] * {:.7e}".format(inode, cg.weight))
-
-#                 ng = genome_nodes[node]
-#                 activation_function = math.tanh
-#                 node_evals.append((node, activation_function, ng.bias, inputs))
-
-#         return FeedForwardNetwork(sensor_nodes, output_nodes, node_evals)
