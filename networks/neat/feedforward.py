@@ -106,10 +106,6 @@ class NeatNetwork(BaseNetwork):
         for input_node_num, output_node_num in connections.keys():
             connections_nodes.add(input_node_num)
             connections_nodes.add(output_node_num)
-        enables = []
-        for connection in connections.values():
-            enables.append(connection.enabled)
-        assert sum(enables) != 0
         assert connections_nodes == all_node_keys
 
         node_evals = self.model.node_evals
@@ -125,9 +121,6 @@ class NeatNetwork(BaseNetwork):
 
     def mutate(self):
         self.genome.mutate_weight()
-        # enables = []
-        # for g in self.genome.get_connect_genes().values(): enables.append(g.enabled)
-        # print("before add node: ", enables)
         self.genome.mutate_add_node()
         self.genome.mutate_add_connection()
         self.model = RecurrentNetwork.create(self.genome)

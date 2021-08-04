@@ -5,15 +5,11 @@ import numpy as np
 import sys
 
 
-def crossover_offsprings(survival_ratio, sorted_parents, sorted_rewards, offspring_num):
+def crossover_offsprings(parents, rewards, offspring_num):
     offsprings = []
-    parent_num = round(survival_ratio * len(sorted_parents))
-    assert parent_num >= 2
-    parents = sorted_parents[:parent_num]
-    rewards = sorted_rewards[:parent_num]
-    p = np.arange(1, parent_num + 1)[::-1] / sum(range(parent_num + 1))
+    p = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))
     for _ in range(offspring_num):
-        p1_idx, p2_idx = np.random.choice(range(parent_num), 2, p=p, replace=False)
+        p1_idx, p2_idx = np.random.choice(range(len(parents)), 2, p=p, replace=False)
         p1, p2 = parents[p1_idx], parents[p2_idx]
         superior = "p1"
         if rewards[p1_idx] < rewards[p2_idx]:

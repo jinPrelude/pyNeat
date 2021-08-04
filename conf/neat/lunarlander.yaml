@@ -1,0 +1,20 @@
+env:
+  name: LunarLanderContinuous-v2
+  max_step: 300
+  pomdp: False
+
+network:
+  name: NeatNetwork
+  num_state: 8
+  num_action: 4
+  discrete_action: False
+  mutate_sigma: 1.0
+  max_weight: 30.
+  min_weight: -30.
+
+strategy:
+  name : neat
+  init_sigma: 2
+  sigma_decay: 0.99
+  elite_num: 2
+  offspring_num: 500

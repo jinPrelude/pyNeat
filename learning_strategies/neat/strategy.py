@@ -29,6 +29,10 @@ class Neat(BaseOffspringStrategy):
         self.champions_num = champions_num
         self.survival_ratio = survival_ratio
 
+        self.crossover_num = round(self.crossover_offspring_ratio * self.offspring_num)
+        self.mutate_only_num = self.offspring_num - self.crossover_num - self.champions_num
+        self.survival_num = round(self.survival_ratio * self.offspring_num)
+
         self.elite_model = None
         self.offsprings = []
 
@@ -57,16 +61,14 @@ class Neat(BaseOffspringStrategy):
         rewards = [rewards[i] for i in offspring_rank_id]
         self.elite_model = deepcopy(self.offsprings[0])  # deepcopy is essential
 
-        crossover_num = round(self.crossover_offspring_ratio * self.offspring_num)
-        mutate_only_num = self.offspring_num - crossover_num
-
+        survival_num = max(self.survival_num, 2)
+        survivals = deepcopy(self.offsprings[:survival_num])
+        mutate_only = [random.choice(survivals) for _ in range(self.mutate_only_num)]
         champions = deepcopy(self.offsprings[: self.champions_num])  # deepcopy is essneital
-        # crossover = crossover_offsprings(self.survival_ratio, self.offsprings, rewards, crossover_num)
-        # mutation = self.mutate(self.elite_num, self.offsprings, rewards, mutate_only_num)
-        # self.offsprings = champions + crossover + mutation
-        crossover = crossover_offsprings(self.survival_ratio, self.offsprings, rewards, self.offspring_num - self.champions_num)
+        crossover = crossover_offsprings(survivals, rewards, self.crossover_num)
         crossover = mutate_offsprings(crossover)
-        self.offsprings = crossover + champions
+        mutate_only = mutate_offsprings(survivals)
+        self.offsprings = champions + crossover + mutate_only
         offspring_group = [wrap_agentid(self.agent_ids, off) for off in self.offsprings]
         return offspring_group, best_reward, 0
 

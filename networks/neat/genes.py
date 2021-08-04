@@ -43,12 +43,16 @@ class Genome:
     def mutate_weight(self):
         connect_genes = self.get_connect_genes()
         for gene in connect_genes.values():
-            if random.random() < 0.8:
+            if random.random() < 0.005:
                 if random.random() < 0.9:
                     # uniform perturb originally but I didn't understand how to implement it.
-                    gene.weight += np.random.normal(0, self.mutate_sigma)
+                    noise = np.random.normal(0, self.mutate_sigma)
+                    weight = np.clip(gene.weight + noise, self.min_weight, self.max_weight)
+
                 else:
-                    gene.weight = np.random.uniform(self.min_weight, self.max_weight)
+                    weight = np.random.uniform(self.min_weight, self.max_weight)
+                    weight = np.clip(weight, self.min_weight, self.max_weight)
+                gene.weight = weight
 
     def mutate_add_node(self):
         if random.random() < 0.3:
