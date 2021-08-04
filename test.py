@@ -28,8 +28,9 @@ def main():
     with open(args.cfg_path) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         f.close()
-
     env = builder.build_env(config["env"], 777)
+    set_seed(777)
+    env.seed(777)
     agent_ids = env.get_agent_ids()
 
     if args.save_gif:

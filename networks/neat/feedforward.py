@@ -44,17 +44,27 @@ class NeatNetwork(BaseNetwork):
         self.model = RecurrentNetwork.create(self.genome)
 
     def save_model(self, save_path, model_name):
+
         model_name += ".pkl"
         save_path = os.path.join(save_path, model_name)
         with open(save_path, "wb") as f:
-            pickle.dump([self.genome, self.model.node_evals], f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.genome, f, pickle.HIGHEST_PROTOCOL)
         return save_path
 
     def load_model(self, path):
         with open(path, "rb") as f:
-            test = pickle.load(f)
-        self.genome = test[0]
+            self.genome = pickle.load(f)
         self.model = RecurrentNetwork.create(self.genome)
+
+    def check_genome_model_synced(self):
+        nodes = self.genome.node_genes.nodes
+        connections = self.genome.connect_genes.connections
+        node_evals = self.model.node_evals
+        for node in node_evals:
+            curr_node, act_func, bias, input_list = node
+            assert nodes[curr_node].bias == bias
+            for input_node_num, weight in input_list:
+                assert connections[(input_node_num, curr_node)].weight == weight
 
     def mutate(self):
         self.genome.mutate_weight()

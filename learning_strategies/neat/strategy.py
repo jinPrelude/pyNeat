@@ -47,6 +47,7 @@ class Neat(BaseOffspringStrategy):
             offspring.normal_init(0.0, self.init_sigma)
             self.offsprings.append(offspring)
             offspring_group.append(wrap_agentid(agent_ids, offspring))
+
         return offspring_group
 
     def evaluate(self, rewards: list):
@@ -54,12 +55,12 @@ class Neat(BaseOffspringStrategy):
         offspring_rank_id = np.flip(np.argsort(rewards))
         self.offsprings = [self.offsprings[i] for i in offspring_rank_id]
         rewards = [rewards[i] for i in offspring_rank_id]
-        self.elite_model = self.offsprings[0]
+        self.elite_model = deepcopy(self.offsprings[0])  # deepcopy is essential
 
         crossover_num = round(self.crossover_offspring_ratio * self.offspring_num)
         mutate_only_num = self.offspring_num - crossover_num
 
-        champions = self.offsprings[: self.champions_num]
+        champions = deepcopy(self.offsprings[: self.champions_num])  # deepcopy is essneital
         # crossover = crossover_offsprings(self.survival_ratio, self.offsprings, rewards, crossover_num)
         # mutation = self.mutate(self.elite_num, self.offsprings, rewards, mutate_only_num)
         # self.offsprings = champions + crossover + mutation
