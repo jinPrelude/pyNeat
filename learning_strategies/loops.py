@@ -164,8 +164,9 @@ def test_log_model(save_dir, env_cfg, elite_network):
     clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
     clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
     wandb.save(os.path.join(save_dir, "play.gif"))
-    save_path = elite_network.save_model(save_dir, "elite")
-    wandb.save(save_path)
+    save_path_list = elite_network.save_model(save_dir, "elite")
+    for path in save_path_list:
+        wandb.save(path)
 
     wandb.log({"test_reward": episode_reward})
 

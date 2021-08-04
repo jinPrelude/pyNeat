@@ -56,8 +56,8 @@ class NeatNetwork(BaseNetwork):
         save_model_path = os.path.join(save_path, model_name + ".pkl")
         with open(save_model_path, "wb") as f:
             pickle.dump(self.genome, f, pickle.HIGHEST_PROTOCOL)
-        self._draw_network(save_path, model_name)
-        return save_path
+        draw_path = self._draw_network(save_path, model_name)
+        return [save_model_path, draw_path]
 
     def load_model(self, path):
         with open(path, "rb") as f:
@@ -94,9 +94,10 @@ class NeatNetwork(BaseNetwork):
 
         pos = nx.multipartite_layout(g_pos, subset_key="type")
         nx.draw(g, with_labels=True, pos=pos, node_color=color_map)
-        esave_path = os.path.join(save_path, model_name + f"_graph_{i}.png")
-        plt.savefig(esave_path)
+        saved_path = os.path.join(save_path, model_name + f"_graph_{i}.png")
+        plt.savefig(saved_path)
         plt.clf()
+        return saved_path
 
     def check_genome_model_synced(self):
         nodes = self.genome.node_genes.nodes

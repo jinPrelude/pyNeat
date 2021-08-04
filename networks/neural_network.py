@@ -89,7 +89,7 @@ class GymEnvModel(EvolutionNetwork):
         model_name += ".pt"
         save_path = os.path.join(save_path, model_name)
         torch.save(self.state_dict(), save_path)
-        return save_path
+        return [save_path]
 
     def load_model(self, path):
         self.load_state_dict(torch.load(path))
