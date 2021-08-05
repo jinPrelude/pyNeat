@@ -1,3 +1,4 @@
+import random
 from copy import deepcopy
 
 import torch
@@ -35,9 +36,6 @@ class Neat(BaseOffspringStrategy):
 
         self.elite_model = None
         self.offsprings = []
-
-    def _gen_offsprings(self, agent_ids, elite_models, elite_num, offspring_num, curr_sigma):
-        pass
 
     def get_elite_model(self):
         return self.elite_model

@@ -4,17 +4,16 @@ from abc import *
 import os
 import pickle
 import math
+from copy import deepcopy
+import random
 
 import numpy as np
-
-# importing networkx
 import networkx as nx
-
-# importing matplotlib.pyplot
 import matplotlib.pyplot as plt
 
 from networks.abstracts import BaseNetwork
 from networks.neat.genes import Genome
+from .utils import find_required_nodes
 
 
 class NeatNetwork(BaseNetwork):
@@ -126,6 +125,52 @@ class NeatNetwork(BaseNetwork):
         self.genome.mutate_add_connection()
         self.model = RecurrentNetwork.create(self.genome)
         self.check_genome_model_synced()
+
+    def crossover(self, spouse, draw=False):
+        p1_connect_genes = self.genome.get_connect_genes()
+        p2_connect_genes = spouse.genome.get_connect_genes()
+        p1_connections = set(self.genome.get_connect_genes().keys())
+        p2_connections = set(spouse.genome.get_connect_genes().keys())
+
+        child = deepcopy(self)
+        child_nodes = {}
+        child_connections = {}
+
+        # matching genes crossover
+        matching_connections = p1_connections & p2_connections
+        child_nodes.update(find_required_nodes(matching_connections, self.genome))
+        for connection in matching_connections:
+            rand_num = random.random()
+            if rand_num > 0.5:
+                child_connections[connection] = p1_connect_genes[connection]
+            else:
+                child_connections[connection] = p2_connect_genes[connection]
+            if p1_connect_genes[connection].enabled == False and p2_connect_genes[connection].enabled == False:
+                if random.random() < 0.25:
+                    child_connections[connection].enabled = True
+
+        # disjoint & excess crossover(treat the two equally).
+        def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
+            parent_connect_genes = parent_genome.get_connect_genes()
+            child_nodes.update(find_required_nodes(connection_keys, parent_genome))
+            for connection in connection_keys:
+                child_connections[connection] = parent_connect_genes[connection]
+            return child_nodes, child_connections
+
+        p1_differences = p1_connections - p2_connections
+        p2_differences = p2_connections - p1_connections
+        if not draw:
+            child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, self.genome)
+        else:
+            for connection in p1_differences:
+                if random.random() < 0.5:
+                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, self.genome)
+            for connection in p2_differences:
+                if random.random() < 0.5:
+                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p2_differences, spouse.genome)
+        child.update_model(child_nodes, child_connections)
+        child.check_genome_model_synced()
+        return child
 
 
 class RecurrentNetwork(object):
