@@ -32,6 +32,7 @@ def build_network(config):
             config["mutate_sigma"],
             config["max_weight"],
             config["min_weight"],
+            config["probs"],
         )
 
 

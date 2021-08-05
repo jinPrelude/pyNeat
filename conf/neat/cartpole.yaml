@@ -11,6 +11,11 @@ network:
   mutate_sigma: 1.0
   max_weight: 30.
   min_weight: -30.
+  probs:
+    mutate_weight: 0.8
+    mutate_add_node: 0.2
+    mutate_add_connection: 0.2
+    re_enable: 0.25
 
 strategy:
   name : neat

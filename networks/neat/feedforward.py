@@ -17,18 +17,20 @@ from .utils import find_required_nodes
 
 
 class NeatNetwork(BaseNetwork):
-    def __init__(self, num_state, num_action, discrete_action, mutate_sigma, max_weight, min_weight):
+    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, max_weight, min_weight, probs):
         self.num_state = num_state
         self.num_action = num_action
         self.discrete_action = discrete_action
+        self.init_mu = init_mu
+        self.init_std = init_std
 
         # for genome
-        self.mutate_sigma = mutate_sigma
         self.max_weight = max_weight
         self.min_weight = min_weight
+        self.probs = probs
 
     def init_genes(self):
-        self.genome = Genome(self.num_state, self.num_action, self.mutate_sigma, self.max_weight, self.min_weight)
+        self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
         self.model = RecurrentNetwork.create(self.genome)
 
     def forward(self, x):
@@ -37,8 +39,8 @@ class NeatNetwork(BaseNetwork):
             output = np.argmax(output)
         return output
 
-    def normal_init(self, mu, std):
-        self.genome.normal_init(mu, std)
+    def normal_init(self):
+        self.genome.normal_init(self.init_mu, self.init_std)
         self.model = RecurrentNetwork.create(self.genome)
 
     def reset(self):
@@ -120,9 +122,9 @@ class NeatNetwork(BaseNetwork):
         assert node_eval_node_nums <= all_node_keys
 
     def mutate(self):
-        self.genome.mutate_weight()
-        self.genome.mutate_add_node()
-        self.genome.mutate_add_connection()
+        self.genome.mutate_weight(self.probs["mutate_weight"])
+        self.genome.mutate_add_node(self.probs["mutate_add_node"])
+        self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
         self.model = RecurrentNetwork.create(self.genome)
         self.check_genome_model_synced()
 
@@ -146,7 +148,7 @@ class NeatNetwork(BaseNetwork):
             else:
                 child_connections[connection] = p2_connect_genes[connection]
             if p1_connect_genes[connection].enabled == False and p2_connect_genes[connection].enabled == False:
-                if random.random() < 0.25:
+                if random.random() < self.probs["re_enable"]:
                     child_connections[connection].enabled = True
 
         # disjoint & excess crossover(treat the two equally).

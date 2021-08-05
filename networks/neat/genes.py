@@ -40,10 +40,10 @@ class Genome:
         else:
             return self.node_genes.node_list_by_type[node_type]
 
-    def mutate_weight(self):
+    def mutate_weight(self, prob):
         connect_genes = self.get_connect_genes()
         for gene in connect_genes.values():
-            if random.random() < 0.005:
+            if random.random() < prob:
                 if random.random() < 0.9:
                     # uniform perturb originally but I didn't understand how to implement it.
                     noise = np.random.normal(0, self.mutate_sigma)
@@ -54,8 +54,8 @@ class Genome:
                     weight = np.clip(weight, self.min_weight, self.max_weight)
                 gene.weight = weight
 
-    def mutate_add_node(self):
-        if random.random() < 0.3:
+    def mutate_add_node(self, prob):
+        if random.random() < prob:
             connect_genes = self.get_connect_genes()
             conn_to_split = random.choice(list(connect_genes.values()))
             new_node_num = self.node_genes.add_node("hidden")
@@ -63,8 +63,8 @@ class Genome:
             self.connect_genes.add_connection(conn_to_split.in_node_num, new_node_num, 1.0, True)
             self.connect_genes.add_connection(new_node_num, conn_to_split.out_node_num, 1.0, True)
 
-    def mutate_add_connection(self):
-        if random.random() < 0.3:
+    def mutate_add_connection(self, prob):
+        if random.random() < prob:
             output_node_keys = self.get_node_keys("output")
             hidden_node_keys = self.get_node_keys("hidden")
             # print("mutate_add_connection: output_node_keys: ", output_node_keys)
