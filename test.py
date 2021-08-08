@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg-path", type=str, default="conf/ant.yaml")
     parser.add_argument("--ckpt-path", type=str)
+    parser.add_argument("--seed", type=int, default=777)
     parser.add_argument("--save-gif", action="store_true")
     parser.add_argument("--server-run", action="store_true")
     args = parser.parse_args()
@@ -28,9 +29,9 @@ def main():
     with open(args.cfg_path) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         f.close()
-    env = builder.build_env(config["env"], 777)
-    set_seed(777)
-    env.seed(777)
+    env = builder.build_env(config["env"], args.seed)
+    set_seed(args.seed)
+    env.seed(args.seed)
     agent_ids = env.get_agent_ids()
 
     if args.save_gif:

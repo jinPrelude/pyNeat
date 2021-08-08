@@ -12,7 +12,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 from networks.abstracts import BaseNetwork
-from networks.neat.genes import Genome
+from networks.neat.genes import Genome, NodeGenes
 from .utils import find_required_nodes
 
 
@@ -74,7 +74,7 @@ class NeatNetwork(BaseNetwork):
         g = nx.DiGraph()
 
         enabled_nodes = set()
-        for i, connection in enumerate(connections.values()):
+        for connection in connections.values():
             if connection.enabled:
                 in_node = connection.in_node_num
                 out_node = connection.out_node_num
@@ -95,7 +95,7 @@ class NeatNetwork(BaseNetwork):
 
         pos = nx.multipartite_layout(g_pos, subset_key="type")
         nx.draw(g, with_labels=True, pos=pos, node_color=color_map)
-        saved_path = os.path.join(save_path, model_name + f"_graph_{i}.png")
+        saved_path = os.path.join(save_path, model_name + f"_graph.png")
         plt.savefig(saved_path)
         plt.clf()
         return saved_path
@@ -157,7 +157,7 @@ class NeatNetwork(BaseNetwork):
             child_nodes.update(find_required_nodes(connection_keys, parent_genome))
             for connection in connection_keys:
                 child_connections[connection] = parent_connect_genes[connection]
-            return child_nodes, child_connections
+            return deepcopy(child_nodes), deepcopy(child_connections)
 
         p1_differences = p1_connections - p2_connections
         p2_differences = p2_connections - p1_connections
@@ -166,10 +166,10 @@ class NeatNetwork(BaseNetwork):
         else:
             for connection in p1_differences:
                 if random.random() < 0.5:
-                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, self.genome)
+                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], self.genome)
             for connection in p2_differences:
                 if random.random() < 0.5:
-                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p2_differences, spouse.genome)
+                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], spouse.genome)
         child.update_model(child_nodes, child_connections)
         child.check_genome_model_synced()
         return child

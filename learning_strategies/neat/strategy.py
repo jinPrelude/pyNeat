@@ -12,8 +12,6 @@ from .neat_utils import *
 class Neat(BaseOffspringStrategy):
     def __init__(
         self,
-        init_sigma,
-        sigma_decay,
         elite_num,
         offspring_num,
         crossover_offspring_ratio=0.75,
@@ -22,10 +20,7 @@ class Neat(BaseOffspringStrategy):
     ):
         super(Neat, self).__init__()
         self.offspring_num = offspring_num
-        self.init_sigma = init_sigma
-        self.sigma_decay = sigma_decay
         self.elite_num = elite_num
-        self.curr_sigma = self.init_sigma
         self.crossover_offspring_ratio = crossover_offspring_ratio
         self.champions_num = champions_num
         self.survival_ratio = survival_ratio
@@ -46,7 +41,7 @@ class Neat(BaseOffspringStrategy):
         offspring_group = []
         for _ in range(self.offspring_num):
             offspring = deepcopy(network)
-            offspring.normal_init(0.0, self.init_sigma)
+            offspring.normal_init()
             self.offsprings.append(offspring)
             offspring_group.append(wrap_agentid(agent_ids, offspring))
 

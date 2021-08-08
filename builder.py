@@ -29,7 +29,8 @@ def build_network(config):
             config["num_state"],
             config["num_action"],
             config["discrete_action"],
-            config["mutate_sigma"],
+            config["init_mu"],
+            config["init_std"],
             config["max_weight"],
             config["min_weight"],
             config["probs"],
@@ -72,8 +73,6 @@ def build_loop(
         )
     elif strategy_cfg["name"] == "neat":
         strategy = Neat(
-            strategy_cfg["init_sigma"],
-            strategy_cfg["sigma_decay"],
             strategy_cfg["elite_num"],
             strategy_cfg["offspring_num"],
         )
