@@ -23,9 +23,9 @@ class Genome:
         for gene in connect_genes.values():
             gene.weight = np.random.normal(mu, std)
 
-    def update_genome(self, nodes, connections):
-        self.node_genes.update(nodes)
-        self.connect_genes.update(connections)
+    def replace_genome(self, nodes, connections):
+        self.node_genes.replace(nodes)
+        self.connect_genes.replace(connections)
 
     def get_nodes(self):
         return self.node_genes.nodes
@@ -100,7 +100,7 @@ class NodeGenes:
         self.node_list_by_type[node_type].append(node_num)
         return node_num
 
-    def update(self, nodes):
+    def replace(self, nodes):
         assert type(nodes) == dict
         assert type(nodes[0]) == Node
         self.nodes = nodes
@@ -140,7 +140,7 @@ class ConnectGenes:
             weight = np.random.normal(self.init_mu, self.init_std)
         self.connections[(in_node_num, out_node_num)] = Connect(in_node_num, out_node_num, weight, enabled)
 
-    def update(self, connections):
+    def replace(self, connections):
         self.connections = connections
 
 

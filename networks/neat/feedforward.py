@@ -31,7 +31,7 @@ class NeatNetwork(BaseNetwork):
 
     def init_genes(self):
         self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
-        self.model = RecurrentNetwork.create(self.genome)
+        self._update_model()
 
     def forward(self, x):
         output = self.model.activate(x[0])
@@ -41,14 +41,17 @@ class NeatNetwork(BaseNetwork):
 
     def normal_init(self):
         self.genome.normal_init(self.init_mu, self.init_std)
-        self.model = RecurrentNetwork.create(self.genome)
+        self._update_model()
 
     def reset(self):
         self.model.reset()
 
-    def update_model(self, nodes, connections):
-        self.genome.update_genome(nodes, connections)
+    def _update_model(self):
         self.model = RecurrentNetwork.create(self.genome)
+
+    def replace_genome(self, nodes, connections):
+        self.genome.replace_genome(nodes, connections)
+        self._update_model()
 
     def save_model(self, save_path, model_name):
         save_path = os.path.join(save_path, model_name)
@@ -63,7 +66,7 @@ class NeatNetwork(BaseNetwork):
     def load_model(self, path):
         with open(path, "rb") as f:
             self.genome = pickle.load(f)
-        self.model = RecurrentNetwork.create(self.genome)
+        self._update_model()
 
     def _draw_network(self, save_path, model_name):
         color_map = []
@@ -125,7 +128,7 @@ class NeatNetwork(BaseNetwork):
         self.genome.mutate_weight(self.probs["mutate_weight"])
         self.genome.mutate_add_node(self.probs["mutate_add_node"])
         self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
-        self.model = RecurrentNetwork.create(self.genome)
+        self._update_model()
         self.check_genome_model_synced()
 
     def crossover(self, spouse, draw=False):
@@ -170,7 +173,7 @@ class NeatNetwork(BaseNetwork):
             for connection in p2_differences:
                 if random.random() < 0.5:
                     child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], spouse.genome)
-        child.update_model(child_nodes, child_connections)
+        child.replace_genome(child_nodes, child_connections)
         child.check_genome_model_synced()
         return child
 
