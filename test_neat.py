@@ -1,5 +1,5 @@
 import numpy as np
-from networks.neat.feedforward import NeatNetwork, RecurrentNetwork
+from networks.neat.network import NeatNetwork, RecurrentNetwork
 from networks.neat.genes import Genome
 
 model = NeatNetwork(2, 1, False, 1, -30, 30)

@@ -1,6 +1,6 @@
 from envs import *
 from networks.neural_network import *
-from networks.neat.feedforward import NeatNetwork
+from networks.neat.network import NeatNetwork
 from learning_strategies import *
 
 
