@@ -116,7 +116,6 @@ def pick_by_pass_score(offsprings, adjusted_fitness, pass_scores, survival_num):
 
 
 def sort_offsprings_rewards(offsprings, rewards):
-    # sort survivals
     rank_id = np.flip(np.argsort(rewards))
     sorted_offsprings = [offsprings[i] for i in rank_id]
     sorted_rewards = [rewards[i] for i in rank_id]
