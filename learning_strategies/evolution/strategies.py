@@ -371,7 +371,6 @@ class openai_es(BaseOffspringStrategy):
         """
 
         offspring_rank_id = np.flip(np.argsort(rewards))
-        best_reward = max(rewards)
 
         reward_array = np.zeros(len(rewards))
         for idx in reversed(range(len(rewards))):
@@ -399,7 +398,8 @@ class openai_es(BaseOffspringStrategy):
             self.curr_sigma,
             self.offspring_num,
         )
-        return offspring_group, best_reward, self.curr_sigma
+        info = {"curr_sigma": self.curr_sigma}
+        return offspring_group, info
 
     def get_wandb_cfg(self):
         wandb_cfg = dict(

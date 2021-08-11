@@ -53,7 +53,6 @@ class Neat(BaseOffspringStrategy):
         return offspring_group
 
     def evaluate(self, rewards: list):
-        best_reward = max(rewards)
         offspring_rank_id = np.flip(np.argsort(rewards))
         self.offsprings = [self.offsprings[i] for i in offspring_rank_id]
         rewards = [rewards[i] for i in offspring_rank_id]
@@ -70,7 +69,8 @@ class Neat(BaseOffspringStrategy):
         mutate_only = mutate_offsprings(mutate_only)
         self.offsprings = champions + crossover + mutate_only
         offspring_group = [wrap_agentid(self.agent_ids, off) for off in self.offsprings]
-        return offspring_group, best_reward, diversity_score
+        info = {"diversity_score: ": diversity_score}
+        return offspring_group, info
 
     def get_wandb_cfg(self):
         pass

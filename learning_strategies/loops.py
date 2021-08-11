@@ -111,19 +111,20 @@ class ESLoop(BaseESLoop):
             rollout_consumed_time = time.time() - rollout_start_time
 
             eval_start_time = time.time()
-            offsprings, best_reward, curr_sigma = self.offspring_strategy.evaluate(rewards)
+            best_reward = max(rewards)
+            offsprings, info = self.offspring_strategy.evaluate(rewards)
             eval_consumed_time = time.time() - eval_start_time
 
             # print log
             consumed_time = time.time() - start_time
             print(
-                f"episode: {ep_num}, Best reward: {best_reward:.2f}, sigma: {curr_sigma:.3f}, time: {consumed_time:.2f}, rollout_t: {rollout_consumed_time:.2f}, eval_t: {eval_consumed_time:.2f}"
+                f"episode: {ep_num}, Best reward: {best_reward:.2f}, time: {consumed_time:.2f}, rollout_t: {rollout_consumed_time:.2f}, eval_t: {eval_consumed_time:.2f}"
             )
 
             if self.log:
                 self.ep5_rewards.append(best_reward)
-                ep5_mean_reward = sum(self.ep5_rewards) / len(self.ep5_rewards)
-                wandb.log({"ep5_mean_reward": ep5_mean_reward, "curr_sigma": curr_sigma})
+                info["ep5_mean_reward"] = sum(self.ep5_rewards) / len(self.ep5_rewards)
+                wandb.log(info)
 
             elite = self.offspring_strategy.get_elite_model()
             if ep_num % self.save_model_period == 0:
