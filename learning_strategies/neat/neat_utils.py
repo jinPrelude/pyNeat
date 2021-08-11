@@ -1,5 +1,4 @@
 from itertools import combinations
-import sys
 
 import numpy as np
 
@@ -80,16 +79,21 @@ def calculate_delta(p1, p2, c1, c3):
     diff_genes_num = len(set.symmetric_difference(p1_connect_keys, p2_connect_keys))
     weight_diff = 1
     if (len(p1_genes) + len(p2_genes)) / 2 > 20:
-        p1_weights = []
-        for gene in p1_genes.values():
-            p1_weights.append(gene.weight)
-        p2_weights = []
-        for gene in p2_genes.values():
-            p2_weights.append(gene.weight)
-        weight_diff = abs(mean(p1_weights) - mean(p2_weights))
+        p1_weight_avg = get_weights_average(p1)
+        p2_weight_avg = get_weights_average(p2)
+        weight_diff = abs(p1_weight_avg - p2_weight_avg)
     delta = (c1 * diff_genes_num) / all_genes_num
     delta += c3 * weight_diff
     return delta
+
+
+def get_weights_average(neat_network):
+    # for delta calculation
+    connect_genes = neat_network.genome.get_connect_genes()
+    weights = []
+    for gene in connect_genes.values():
+        weights.append(gene.weight)
+    return mean(weights)
 
 
 def pick_survivals(offsprings, adjusted_fitness, pass_scores, survival_num):

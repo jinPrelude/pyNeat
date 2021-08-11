@@ -12,7 +12,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 from networks.abstracts import BaseNetwork
-from networks.neat.genes import Genome, NodeGenes
+from networks.neat.genes import Genome
 from .utils import find_required_nodes
 
 
@@ -31,7 +31,7 @@ class NeatNetwork(BaseNetwork):
 
     def init_genes(self):
         self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
-        self._update_model()
+        self._update_model()  # model must be updated after genome modified.
 
     def forward(self, x):
         output = self.model.activate(x[0])
@@ -41,7 +41,7 @@ class NeatNetwork(BaseNetwork):
 
     def normal_init(self):
         self.genome.normal_init(self.init_mu, self.init_std)
-        self._update_model()
+        self._update_model()  # model must be updated after genome modified.
 
     def reset(self):
         self.model.reset()
@@ -51,7 +51,7 @@ class NeatNetwork(BaseNetwork):
 
     def replace_genome(self, nodes, connections):
         self.genome.replace_genome(nodes, connections)
-        self._update_model()
+        self._update_model()  # model must be updated after genome modified.
 
     def save_model(self, save_path, model_name):
         save_path = os.path.join(save_path, model_name)
@@ -66,7 +66,7 @@ class NeatNetwork(BaseNetwork):
     def load_model(self, path):
         with open(path, "rb") as f:
             self.genome = pickle.load(f)
-        self._update_model()
+        self._update_model()  # model must be updated after genome modified.
 
     def _draw_network(self, save_path, model_name):
         color_map = []
@@ -128,7 +128,7 @@ class NeatNetwork(BaseNetwork):
         self.genome.mutate_weight(self.probs["mutate_weight"])
         self.genome.mutate_add_node(self.probs["mutate_add_node"])
         self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
-        self._update_model()
+        self._update_model()  # model must be updated after genome modified.
         self.check_genome_model_synced()
 
     def crossover(self, spouse, draw=False):
