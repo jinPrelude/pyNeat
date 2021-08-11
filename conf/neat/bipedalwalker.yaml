@@ -20,5 +20,10 @@ network:
 
 strategy:
   name : neat
-  elite_num: 2
-  offspring_num: 1500
+  offspring_num: 500
+  crossover_ratio: 0.75
+  champions_num: 5
+  survival_ratio: 0.2
+  c1: 1.0
+  c3: 0.4
+  delta_threshold: 3.0

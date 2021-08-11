@@ -73,8 +73,13 @@ def build_loop(
         )
     elif strategy_cfg["name"] == "neat":
         strategy = Neat(
-            strategy_cfg["elite_num"],
             strategy_cfg["offspring_num"],
+            strategy_cfg["crossover_ratio"],
+            strategy_cfg["champions_num"],
+            strategy_cfg["survival_ratio"],
+            strategy_cfg["c1"],
+            strategy_cfg["c3"],
+            strategy_cfg["delta_threshold"],
         )
 
     return ESLoop(
