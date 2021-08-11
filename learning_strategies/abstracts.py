@@ -18,10 +18,6 @@ class BaseOffspringStrategy(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _gen_offsprings(self):
-        pass
-
-    @abstractmethod
     def get_elite_model(self):
         pass
 

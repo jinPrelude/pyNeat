@@ -11,8 +11,8 @@ network:
   gru: False
 
 strategy:
-  name : simple_evolution
+  name : simple_genetic
   init_sigma: 2
-  sigma_decay: 0.9999
+  sigma_decay: 0.999
   elite_num: 10
-  offspring_num: 96
+  offspring_num: 120

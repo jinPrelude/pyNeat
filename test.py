@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg-path", type=str, default="conf/ant.yaml")
     parser.add_argument("--ckpt-path", type=str)
+    parser.add_argument("--seed", type=int, default=777)
     parser.add_argument("--save-gif", action="store_true")
     parser.add_argument("--server-run", action="store_true")
     args = parser.parse_args()
@@ -28,8 +29,9 @@ def main():
     with open(args.cfg_path) as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
         f.close()
-
-    env = builder.build_env(config["env"], 777)
+    env = builder.build_env(config["env"], args.seed)
+    set_seed(args.seed)
+    env.seed(args.seed)
     agent_ids = env.get_agent_ids()
 
     if args.save_gif:
@@ -42,12 +44,11 @@ def main():
         display.start()
 
     network = builder.build_network(config["network"])
-    network.load_state_dict(torch.load(args.ckpt_path))
+    network.load_model(args.ckpt_path)
     for i in range(10):
         models = {}
         for agent_id in agent_ids:
             models[agent_id] = deepcopy(network)
-            models[agent_id].eval()
             models[agent_id].reset()
         obs = env.reset()
 
@@ -59,10 +60,10 @@ def main():
             actions = {}
             for k, model in models.items():
                 s = obs[k]["state"][np.newaxis, ...]
-                actions[k] = model(s)
+                actions[k] = model.forward(s)
             obs, r, done, _ = env.step(actions)
             if "Unity" not in env.name:
-                rgb_array = env.render()
+                rgb_array = env.render(mode="rgb_array")
                 if args.save_gif:
                     ep_render_lst.append(rgb_array)
             episode_reward += r

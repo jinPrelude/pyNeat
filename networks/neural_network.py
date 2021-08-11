@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 
 import numpy as np
@@ -5,10 +6,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .abstracts import BaseNetwork
+from .abstracts import EvolutionNetwork
 
 
-class GymEnvModel(BaseNetwork):
+class GymEnvModel(EvolutionNetwork):
     def __init__(self, num_state=8, num_action=4, discrete_action=True, gru=True):
         super(GymEnvModel, self).__init__()
         self.num_action = num_action
@@ -83,3 +84,12 @@ class GymEnvModel(BaseNetwork):
             idx += size
 
         return restored_param
+
+    def save_model(self, save_path, model_name):
+        model_name += ".pt"
+        save_path = os.path.join(save_path, model_name)
+        torch.save(self.state_dict(), save_path)
+        return [save_path]
+
+    def load_model(self, path):
+        self.load_state_dict(torch.load(path))

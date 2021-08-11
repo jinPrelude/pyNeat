@@ -1,11 +1,7 @@
-import yaml
-
-from envs.gym_wrapper import *
-from envs.pettingzoo_wrapper import *
-from envs.unity_wrapper import *
+from envs import *
 from networks.neural_network import *
-from learning_strategies.evolution.offspring_strategies import *
-from learning_strategies.evolution.loop import *
+from networks.neat.network import NeatNetwork
+from learning_strategies import *
 
 
 def build_env(config, unity_worker_id):
@@ -14,6 +10,8 @@ def build_env(config, unity_worker_id):
     elif "Unity" in config["name"]:
         if "CollectApple" in config["name"]:
             return UnityCollectAppleWrapper(config["name"], unity_worker_id, config["max_step"])
+    elif config["name"] in ["AndOps"]:
+        return AndOps()
     else:
         return GymWrapper(config["name"], config["max_step"], config["pomdp"])
 
@@ -25,6 +23,17 @@ def build_network(config):
             config["num_action"],
             config["discrete_action"],
             config["gru"],
+        )
+    if config["name"] == "NeatNetwork":
+        return NeatNetwork(
+            config["num_state"],
+            config["num_action"],
+            config["discrete_action"],
+            config["init_mu"],
+            config["init_std"],
+            config["max_weight"],
+            config["min_weight"],
+            config["probs"],
         )
 
 
@@ -61,6 +70,16 @@ def build_loop(
             strategy_cfg["sigma_decay"],
             strategy_cfg["elite_num"],
             strategy_cfg["offspring_num"],
+        )
+    elif strategy_cfg["name"] == "neat":
+        strategy = Neat(
+            strategy_cfg["offspring_num"],
+            strategy_cfg["crossover_ratio"],
+            strategy_cfg["champions_num"],
+            strategy_cfg["survival_ratio"],
+            strategy_cfg["c1"],
+            strategy_cfg["c3"],
+            strategy_cfg["delta_threshold"],
         )
 
     return ESLoop(

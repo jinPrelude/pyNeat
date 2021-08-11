@@ -1,4 +1,5 @@
 import os
+from abc import *
 import time
 from datetime import datetime
 from copy import deepcopy
@@ -42,7 +43,6 @@ class ESLoop(BaseESLoop):
         self.agent_ids = agent_ids
         self.env_name = env_name
 
-        self.network.zero_init()
         self.ep5_rewards = deque(maxlen=5)
         self.reset_worker_status()
         # create log directory
@@ -111,26 +111,27 @@ class ESLoop(BaseESLoop):
             rollout_consumed_time = time.time() - rollout_start_time
 
             eval_start_time = time.time()
-            offsprings, best_reward, curr_sigma = self.offspring_strategy.evaluate(rewards)
+            best_reward = max(rewards)
+            offsprings, info = self.offspring_strategy.evaluate(rewards)
             eval_consumed_time = time.time() - eval_start_time
 
             # print log
             consumed_time = time.time() - start_time
             print(
-                f"episode: {ep_num}, Best reward: {best_reward:.2f}, sigma: {curr_sigma:.3f}, time: {consumed_time:.2f}, rollout_t: {rollout_consumed_time:.2f}, eval_t: {eval_consumed_time:.2f}"
+                f"episode: {ep_num}, Best reward: {best_reward:.2f}, time: {consumed_time:.2f}, rollout_t: {rollout_consumed_time:.2f}, eval_t: {eval_consumed_time:.2f}"
             )
 
             if self.log:
                 self.ep5_rewards.append(best_reward)
-                ep5_mean_reward = sum(self.ep5_rewards) / len(self.ep5_rewards)
-                wandb.log({"ep5_mean_reward": ep5_mean_reward, "curr_sigma": curr_sigma})
+                info["ep5_mean_reward"] = sum(self.ep5_rewards) / len(self.ep5_rewards)
+                wandb.log(info)
 
             elite = self.offspring_strategy.get_elite_model()
             if ep_num % self.save_model_period == 0:
                 if self.log:
                     if "Unity" in self.env_name:
-                        save_pth = self.save_dir + "/saved_models" + f"/ep_{ep_num}.pt"
-                        torch.save(elite.state_dict(), save_pth)
+                        save_pth = self.save_dir + "/saved_models/"
+                        elite.save_model(save_pth, f"ep_{ep_num}")
                     else:
                         test_log_model(self.save_dir, self.env_cfg, elite)
         self.terminate_all_workers()
@@ -144,7 +145,6 @@ def test_log_model(save_dir, env_cfg, elite_network):
     models = {}
     for agent_id in agent_ids:
         models[agent_id] = deepcopy(elite_network)
-        models[agent_id].eval()
         models[agent_id].reset()
     obs = env.reset()
 
@@ -156,7 +156,7 @@ def test_log_model(save_dir, env_cfg, elite_network):
         actions = {}
         for k, model in models.items():
             s = obs[k]["state"][np.newaxis, ...]
-            actions[k] = model(s)
+            actions[k] = model.forward(s)
         obs, r, done, _ = env.step(actions)
         rgb_array = env.render(mode="rgb_array")
         ep_render_lst.append(rgb_array)
@@ -165,8 +165,9 @@ def test_log_model(save_dir, env_cfg, elite_network):
     clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
     clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
     wandb.save(os.path.join(save_dir, "play.gif"))
-    torch.save(elite_network.state_dict(), os.path.join(save_dir, "elite.pt"))
-    wandb.save(os.path.join(save_dir, "elite.pt"))
+    save_path_list = elite_network.save_model(save_dir, "elite")
+    for path in save_path_list:
+        wandb.save(path)
 
     wandb.log({"test_reward": episode_reward})
 

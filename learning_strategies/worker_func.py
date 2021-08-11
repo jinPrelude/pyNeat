@@ -16,6 +16,7 @@ def run_rollout(env, network):
         count += 1
         total_reward = 0
         for i in range(eval_ep_num):
+            env.seed(i)
             states = env.reset()
             done = False
             for k, model in offspring.items():
@@ -24,7 +25,7 @@ def run_rollout(env, network):
                 actions = {}
                 for k, model in offspring.items():
                     s = states[k]["state"][np.newaxis, ...]
-                    actions[k] = model(s)
+                    actions[k] = model.forward(s)
                 states, r, done, _ = env.step(actions)
                 # env.render()
                 total_reward += r

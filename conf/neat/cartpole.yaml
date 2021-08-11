@@ -1,0 +1,29 @@
+env:
+  name: CartPole-v1
+  max_step: None
+  pomdp: True
+
+network:
+  name: NeatNetwork
+  num_state: 4
+  num_action: 2
+  discrete_action: True
+  init_mu: 0.0
+  init_std: 1.0
+  max_weight: 30.
+  min_weight: -30.
+  probs:
+    mutate_weight: 0.3
+    mutate_add_node: 0.2
+    mutate_add_connection: 0.2
+    re_enable: 0.25
+
+strategy:
+  name : neat
+  offspring_num: 500
+  crossover_ratio: 0.75
+  champions_num: 5
+  survival_ratio: 0.2
+  c1: 1.0
+  c3: 0.4
+  delta_threshold: 3.0
