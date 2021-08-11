@@ -53,16 +53,16 @@ class Neat(BaseOffspringStrategy):
         return offspring_group
 
     def evaluate(self, rewards: list):
-        offspring_rank_id = np.flip(np.argsort(rewards))
-        self.offsprings = [self.offsprings[i] for i in offspring_rank_id]
-        rewards = [rewards[i] for i in offspring_rank_id]
+        self.offsprings, rewards = sort_offsprings_rewards(self.offsprings, rewards)
         self.elite_model = deepcopy(self.offsprings[0])  # deepcopy is essential
         champions = deepcopy(self.offsprings[: self.champions_num])  # deepcopy is essneital
+
         # # adjust fitness
         delta_dict, diversity_score = get_delta_dict(self.offsprings, self.c1, self.c3)
         adjusted_fitness, pass_score = calculate_adjusted_fitness(self.offsprings, rewards, self.delta_threshold, delta_dict)
-        survivals, survivals_rewards = pick_survivals(self.offsprings, adjusted_fitness, pass_score, self.survival_num)
 
+        survivals, survivals_rewards = pick_by_pass_score(self.offsprings, adjusted_fitness, pass_score, self.survival_num)
+        survivals, survivals_rewards = survivals[: self.survival_num], survivals_rewards[: self.survival_num]
         crossover = crossover_offsprings(survivals, survivals_rewards, self.crossover_num, delta_dict, self.delta_threshold)
         crossover = mutate_offsprings(crossover)
         mutate_only = [random.choice(survivals) for _ in range(self.mutate_only_num)]

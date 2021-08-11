@@ -96,10 +96,11 @@ def get_weights_average(neat_network):
     return mean(weights)
 
 
-def pick_survivals(offsprings, adjusted_fitness, pass_scores, survival_num):
+def pick_by_pass_score(offsprings, adjusted_fitness, pass_scores, survival_num):
     # pick offsprings which fitness score is higher than speices' average.
     pass_num = len([i for i in pass_scores if i > 0])
     if pass_num < survival_num:
+        # sort the offsprings by pass_scores if pass_num is insufficient
         rank_id = np.flip(np.argsort(pass_scores))
         survivals = [offsprings[i] for i in rank_id]
         survivals_rewards = [adjusted_fitness[i] for i in rank_id]
@@ -110,8 +111,6 @@ def pick_survivals(offsprings, adjusted_fitness, pass_scores, survival_num):
             if pass_score > 0:
                 survivals.append(offsprings[i])
                 survivals_rewards.append(adjusted_fitness[i])
-    survivals = survivals[:survival_num]
-    survivals_rewards = survivals_rewards[:survival_num]
 
     return survivals, survivals_rewards
 
