@@ -1,5 +1,5 @@
-import numpy as np
 import random
+from itertools import product
 
 import numpy as np
 
@@ -74,16 +74,20 @@ class Genome:
 
     def mutate_add_connection(self, prob):
         if random.random() < prob:
+            connections = self.get_connect_genes()
+            connections_keys = set(connections.keys())
             output_node_keys = self.get_node_keys("output")
             hidden_node_keys = self.get_node_keys("hidden")
             output_node_candidates = output_node_keys + hidden_node_keys
-            output_node_num = random.choice(output_node_candidates)
             input_node_candidates = self.get_node_keys("all")
-            input_node_num = random.choice(input_node_candidates)
-            connections = self.get_connect_genes()
-            if (input_node_num, output_node_num) in connections.keys():
+            possible_combs = set(product(input_node_candidates, output_node_candidates))
+            # Don't allow connections between two output nodes
+            possible_combs = set(x for x in possible_combs if not (x[0] in output_node_keys and x[1] in output_node_keys))
+            possible_combs = list(possible_combs - connections_keys)
+            if len(possible_combs) == 0:
                 return
-            elif input_node_num in output_node_keys and output_node_num in output_node_keys:
+            (input_node_num, output_node_num) = random.choice(possible_combs)
+            if (input_node_num, output_node_num) in connections.keys():
                 return
             self.connect_genes.add_connection(input_node_num, output_node_num)
 
