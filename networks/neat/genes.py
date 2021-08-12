@@ -43,11 +43,7 @@ class Genome:
         return self.connect_genes.connections
 
     def get_node_keys(self, node_type=None):
-        assert node_type in [None, "all", "sensor", "output", "hidden"]
-        if node_type in [None, "all"]:
-            return list(self.node_genes.nodes.keys())
-        else:
-            return self.node_genes.node_list_by_type[node_type]
+        return self.node_genes.get_keys_by_type(node_type)
 
     def mutate_weight(self, prob):
         connect_genes = self.get_connect_genes()
@@ -97,7 +93,7 @@ class NodeGenes:
     def __init__(self, num_state, num_action, init_mu, init_std) -> None:
         self.init_mu = init_mu
         self.init_std = init_std
-        self.get_node_num = iter(range(100000000))
+        self.new_node_idx = 0
         self.nodes = {}
         self.node_list_by_type = {"sensor": [], "output": [], "hidden": []}
         for _ in range(num_state):
@@ -105,21 +101,28 @@ class NodeGenes:
         for _ in range(num_action):
             self.add_node("output")
 
-    def add_node(self, node_type: str, bias=None) -> int:
-        node_num = next(self.get_node_num)
+    def add_node(self, node_type: str, node_num: int = None, bias=None) -> int:
+        if node_num is None:
+            node_num = self.new_node_idx
         if bias is None:
             bias = np.random.normal(self.init_mu, self.init_std)
         self.nodes[node_num] = Node(node_num, node_type, bias)
         self.node_list_by_type[node_type].append(node_num)
+
+        self.new_node_idx = max(self.new_node_idx, node_num + 1)
         return node_num
 
     def replace(self, nodes):
         assert type(nodes) == dict
         assert type(nodes[0]) == Node
         self.nodes = nodes
-        self.node_list_by_type = {"sensor": [], "output": [], "hidden": []}
-        for node in self.nodes.values():
-            self.node_list_by_type[node.type].append(node.num)
+
+    def get_keys_by_type(self, node_type):
+        assert node_type in [None, "all", "sensor", "output", "hidden"]
+        if node_type in [None, "all"]:
+            return list(self.nodes.keys())
+        else:
+            return list(x.num for x in self.nodes.values() if x.type == node_type)
 
 
 class Node:
