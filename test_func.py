@@ -53,20 +53,22 @@ def test_mutate_weight():
     test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
     test_net.init_genome()
     original_weights, _ = _get_weights_bias_list(test_net)
-    original_node_evals, _ = _get_node_evals_weights(test_net)
     test_net.genome.mutate_weight(1)  # mutate all weights
 
     # check if weights changed
     after_weights, _ = _get_weights_bias_list(test_net)
     assert original_weights != after_weights
 
-    # TODO: Move this part to test_neat.py
-    # check if model node_evals also synced
-    test_net._update_model()
-    changed_node_evals, _ = _get_node_evals_weights(test_net)
-    keys = original_node_evals.keys()
-    for key in keys:
-        assert original_node_evals[key] != changed_node_evals[key]
+
+def test_mutate_bias():
+    test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
+    test_net.init_genome()
+    _, original_bias = _get_weights_bias_list(test_net)
+    test_net.genome.mutate_bias(1)  # mutate all weights
+
+    # check if weights changed
+    _, after_bias = _get_weights_bias_list(test_net)
+    assert original_bias != after_bias
 
 
 def test_mutate_add_node():
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     # Genome test
     test_normal_init()
     test_mutate_weight()
-    # test_mutate_bias() # TODO: mutate_bias is not implemented
+    test_mutate_bias()  # TODO: mutate_bias is not implemented
     test_mutate_add_node()
     test_mutate_add_connection()
     # test_get_node_keys() # TODO

@@ -59,6 +59,20 @@ class Genome:
                     weight = np.clip(weight, self.min_weight, self.max_weight)
                 gene.weight = weight
 
+    def mutate_bias(self, prob):
+        nodes = self.get_nodes()
+        for node in nodes.values():
+            if random.random() < prob:
+                if random.random() < 0.9:
+                    # uniform perturb originally but I didn't understand how to implement it.
+                    noise = np.random.normal(0, self.mutate_std)
+                    bias = np.clip(node.bias + noise, self.min_weight, self.max_weight)
+
+                else:
+                    bias = np.random.uniform(self.min_weight, self.max_weight)
+                    bias = np.clip(bias, self.min_weight, self.max_weight)
+                node.bias = bias
+
     def mutate_add_node(self, prob):
         if random.random() < prob:
             connect_genes = self.get_connect_genes()

@@ -128,6 +128,7 @@ class NeatNetwork(NeatBase):
 
     def mutate(self):
         self.genome.mutate_weight(self.probs["mutate_weight"])
+        self.genome.mutate_bias(self.probs["mutate_weight"])
         self.genome.mutate_add_node(self.probs["mutate_add_node"])
         self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
         self._update_model()  # model must be updated after genome modified.
