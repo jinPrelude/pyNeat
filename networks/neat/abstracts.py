@@ -6,7 +6,7 @@ class NeatBase(metaclass=ABCMeta):
         super(NeatBase, self).__init__()
 
     @abstractmethod
-    def init_genes(self):
+    def init_genome(self):
         pass
 
     @abstractmethod

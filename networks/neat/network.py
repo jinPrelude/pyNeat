@@ -28,7 +28,7 @@ class NeatNetwork(NeatBase):
         self.min_weight = min_weight
         self.probs = probs
 
-    def init_genes(self):
+    def init_genome(self):
         self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
         self.genome.normal_init(self.init_mu, self.init_std)
         self._update_model()  # model must be updated after genome modified.
@@ -101,6 +101,7 @@ class NeatNetwork(NeatBase):
         return saved_path
 
     def _check_genome_model_synced(self):
+        # check if genome.nodes == model nodes
         nodes = self.genome.node_genes.nodes
         all_node_keys = set(nodes.keys())
         connections = self.genome.connect_genes.connections
@@ -108,8 +109,9 @@ class NeatNetwork(NeatBase):
         for input_node_num, output_node_num in connections.keys():
             connections_nodes.add(input_node_num)
             connections_nodes.add(output_node_num)
-        assert connections_nodes == all_node_keys
+        node_synced = connections_nodes == all_node_keys
 
+        # check if node_evals <= genome nodes
         node_evals = self.model.node_evals
         node_eval_node_nums = set()
         for node in node_evals:
@@ -119,14 +121,16 @@ class NeatNetwork(NeatBase):
             for input_node_num, weight in input_list:
                 assert connections[(input_node_num, curr_node)].weight == weight
                 node_eval_node_nums.add(input_node_num)
-        assert node_eval_node_nums <= all_node_keys
+        eval_node_synced = node_eval_node_nums <= all_node_keys
+
+        return node_synced and eval_node_synced
 
     def mutate(self):
         self.genome.mutate_weight(self.probs["mutate_weight"])
         self.genome.mutate_add_node(self.probs["mutate_add_node"])
         self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
         self._update_model()  # model must be updated after genome modified.
-        self._check_genome_model_synced()
+        assert self._check_genome_model_synced()
 
     def crossover(self, spouse, draw=False):
         p1_connect_genes = self.genome.get_connect_genes()
@@ -171,7 +175,7 @@ class NeatNetwork(NeatBase):
                 if random.random() < 0.5:
                     child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], spouse.genome)
         child.replace_genome(child_nodes, child_connections)
-        child._check_genome_model_synced()
+        assert child._check_genome_model_synced()
         return child
 
 

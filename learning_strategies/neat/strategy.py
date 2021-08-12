@@ -45,7 +45,7 @@ class Neat(BaseOffspringStrategy):
         offspring_group = []
         for _ in range(self.offspring_num):
             offspring = deepcopy(network)
-            offspring.init_genes()
+            offspring.init_genome()
             self.offsprings.append(offspring)
             offspring_group.append(wrap_agentid(agent_ids, offspring))
 
