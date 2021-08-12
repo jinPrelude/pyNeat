@@ -36,7 +36,7 @@ def main():
 
     if args.save_gif:
         run_num = args.ckpt_path.split("/")[-3]
-        save_dir = f"test_gif/{run_num}/"
+        save_dir = f"gif_evals/{run_num}/"
         os.makedirs(save_dir)
 
     if args.server_run:
