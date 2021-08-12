@@ -10,6 +10,7 @@ network:
   discrete_action: True
   init_mu: 0.0
   init_std: 1.0
+  mutate_std: 1.0
   max_weight: 30.
   min_weight: -30.
   probs:

@@ -27,7 +27,7 @@ def _get_node_evals_weights(network):
 
 
 def test_normal_init():
-    test_net = NeatNetwork(2, 1, False, 0, 1, 30, -30, {})
+    test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
     test_net.init_genome()
 
     # test expected nodes and connections
@@ -46,11 +46,11 @@ def test_normal_init():
     test_net.genome.normal_init(0, 1)
     after_weights, after_bias = _get_weights_bias_list(test_net)
     assert before_weights != after_weights
-    # assert before_bias != after_bias # TODO: bias normal init is not implemented
+    assert before_bias != after_bias
 
 
 def test_mutate_weight():
-    test_net = NeatNetwork(2, 1, False, 0, 1, 30, -30, {})
+    test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
     test_net.init_genome()
     original_weights, _ = _get_weights_bias_list(test_net)
     original_node_evals, _ = _get_node_evals_weights(test_net)
@@ -70,7 +70,7 @@ def test_mutate_weight():
 
 
 def test_mutate_add_node():
-    test_net = NeatNetwork(2, 1, False, 0, 1, 30, -30, {})
+    test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
     test_net.init_genome()
     original_nodes = deepcopy(test_net.genome.get_nodes())
     original_nodes_keys = set(original_nodes.keys())
@@ -97,7 +97,7 @@ def test_mutate_add_node():
 
 
 def test_mutate_add_connection():
-    test_net = NeatNetwork(2, 1, False, 0, 1, 30, -30, {})
+    test_net = NeatNetwork(2, 1, False, 0, 1, 1, 30, -30, {})
     test_net.init_genome()
     original_connections = deepcopy(test_net.genome.get_connect_genes())
     original_connections_keys = set(original_connections.keys())

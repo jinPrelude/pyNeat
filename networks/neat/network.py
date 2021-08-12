@@ -16,12 +16,13 @@ from .abstracts import NeatBase
 
 
 class NeatNetwork(NeatBase):
-    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, max_weight, min_weight, probs):
+    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, mutate_std, max_weight, min_weight, probs):
         self.num_state = num_state
         self.num_action = num_action
         self.discrete_action = discrete_action
         self.init_mu = init_mu
         self.init_std = init_std
+        self.mutate_std = mutate_std
 
         # for genome
         self.max_weight = max_weight
@@ -29,8 +30,8 @@ class NeatNetwork(NeatBase):
         self.probs = probs
 
     def init_genome(self):
-        self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
-        self.genome.normal_init(self.init_mu, self.init_std)
+        self.genome = Genome(self.num_state, self.num_action, self.init_mu, self.init_std, self.mutate_std, self.max_weight, self.min_weight)
+        self.genome.normal_init()
         self._update_model()  # model must be updated after genome modified.
 
     def forward(self, x):
