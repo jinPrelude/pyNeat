@@ -42,11 +42,10 @@ class Neat(BaseOffspringStrategy):
 
     def init_offspring(self, network: torch.nn.Module, agent_ids: list):
         self.agent_ids = agent_ids
-        network.init_genes()
         offspring_group = []
         for _ in range(self.offspring_num):
             offspring = deepcopy(network)
-            offspring.normal_init()
+            offspring.init_genes()
             self.offsprings.append(offspring)
             offspring_group.append(wrap_agentid(agent_ids, offspring))
 
