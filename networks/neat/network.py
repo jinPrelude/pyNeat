@@ -160,7 +160,7 @@ class NeatNetwork(NeatBase):
         # disjoint & excess crossover(treat the two equally).
         def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
             parent_connect_genes = parent_genome.get_connect_genes()
-            child_nodes.update(find_required_nodes(connection_keys, parent_genome)) # TODO: Is it right to also replace bias, not just connections?
+            child_nodes.update(find_required_nodes(connection_keys, parent_genome))  # TODO: Is it right to also replace bias, not just connections?
             for connection in connection_keys:
                 child_connections[connection] = parent_connect_genes[connection]
             return deepcopy(child_nodes), deepcopy(child_connections)

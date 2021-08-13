@@ -111,7 +111,7 @@ def test_mutate_add_connection():
     assert original_connections_keys == changed_connections_keys
 
     # check if new connection is made after generate new nodes
-    test_net.genome.node_genes.add_node("hidden")
+    test_net.genome.node_genes.add_overwrite_node("hidden")
     test_net.genome.mutate_add_connection(1)
     changed_connections = deepcopy(test_net.genome.get_connect_genes())
     changed_connections_keys = set(changed_connections.keys())

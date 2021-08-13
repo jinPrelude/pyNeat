@@ -77,7 +77,7 @@ class Genome:
         if random.random() < prob:
             connect_genes = self.get_connect_genes()
             conn_to_split = random.choice(list(connect_genes.values()))
-            new_node_num = self.node_genes.add_node("hidden")
+            new_node_num = self.node_genes.add_overwrite_node("hidden")
             conn_to_split.enabled = False
             self.connect_genes.add_connection(conn_to_split.in_node_num, new_node_num, 1.0, True)
             self.connect_genes.add_connection(new_node_num, conn_to_split.out_node_num, 1.0, True)
@@ -111,11 +111,12 @@ class NodeGenes:
         self.nodes = {}
         self.node_list_by_type = {"sensor": [], "output": [], "hidden": []}
         for _ in range(num_state):
-            self.add_node("sensor")
+            self.add_overwrite_node("sensor")
         for _ in range(num_action):
-            self.add_node("output")
+            self.add_overwrite_node("output")
 
-    def add_node(self, node_type: str, node_num: int = None, bias=None) -> int:
+    def add_overwrite_node(self, node_type: str, node_num: int = None, bias=None) -> int:
+        # add node. if node_num already exist overwrite.
         if node_num is None:
             node_num = self.new_node_idx
         if bias is None:
