@@ -133,12 +133,12 @@ class ESLoop(BaseESLoop):
                         save_pth = self.save_dir + "/saved_models/"
                         elite.save_model(save_pth, f"ep_{ep_num}")
                     else:
-                        test_log_model(self.save_dir, self.env_cfg, elite)
+                        test_log_model(self.save_dir, self.env_cfg, elite, ep_num)
         self.terminate_all_workers()
         self.display.stop()
 
 
-def test_log_model(save_dir, env_cfg, elite_network):
+def test_log_model(save_dir, env_cfg, elite_network, ep_num):
     env = builder.build_env(env_cfg, rank)
     agent_ids = env.get_agent_ids()
 
@@ -165,7 +165,7 @@ def test_log_model(save_dir, env_cfg, elite_network):
     clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
     clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
     wandb.save(os.path.join(save_dir, "play.gif"))
-    save_path_list = elite_network.save_model(save_dir, "elite")
+    save_path_list = elite_network.save_model(save_dir + "/saved_models/", f"ep_{ep_num}")
     for path in save_path_list:
         wandb.save(path)
 

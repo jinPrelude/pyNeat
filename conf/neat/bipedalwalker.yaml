@@ -10,6 +10,7 @@ network:
   discrete_action: False
   init_mu: 0.0
   init_std: 1.0
+  mutate_std: 1.0
   max_weight: 30.
   min_weight: -30.
   probs:
@@ -20,9 +21,9 @@ network:
 
 strategy:
   name : neat
-  offspring_num: 500
+  offspring_num: 300
   crossover_ratio: 0.75
-  champions_num: 5
+  champions_num: 10
   survival_ratio: 0.2
   c1: 1.0
   c3: 0.4

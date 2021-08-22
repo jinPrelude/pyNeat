@@ -31,6 +31,7 @@ def build_network(config):
             config["discrete_action"],
             config["init_mu"],
             config["init_std"],
+            config["mutate_std"],
             config["max_weight"],
             config["min_weight"],
             config["probs"],

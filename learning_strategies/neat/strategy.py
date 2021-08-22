@@ -42,11 +42,10 @@ class Neat(BaseOffspringStrategy):
 
     def init_offspring(self, network: torch.nn.Module, agent_ids: list):
         self.agent_ids = agent_ids
-        network.init_genes()
         offspring_group = []
         for _ in range(self.offspring_num):
             offspring = deepcopy(network)
-            offspring.normal_init()
+            offspring.init_genome()
             self.offsprings.append(offspring)
             offspring_group.append(wrap_agentid(agent_ids, offspring))
 
@@ -56,7 +55,7 @@ class Neat(BaseOffspringStrategy):
         self.offsprings, rewards = sort_offsprings_rewards(self.offsprings, rewards)
         self.elite_model = deepcopy(self.offsprings[0])  # deepcopy is essential
         champions = deepcopy(self.offsprings[: self.champions_num])  # deepcopy is essneital
-
+        offsprings_mean_reward = mean(rewards)
         # # adjust fitness
         delta_dict, diversity_score = get_delta_dict(self.offsprings, self.c1, self.c3)
         adjusted_fitness, pass_score = calculate_adjusted_fitness(self.offsprings, rewards, self.delta_threshold, delta_dict)
@@ -69,7 +68,10 @@ class Neat(BaseOffspringStrategy):
         mutate_only = mutate_offsprings(mutate_only)
         self.offsprings = champions + crossover + mutate_only
         offspring_group = [wrap_agentid(self.agent_ids, off) for off in self.offsprings]
-        info = {"diversity_score: ": diversity_score}
+        info = {
+            "diversity_score": diversity_score,
+            "offsprings_mean_reward": offsprings_mean_reward,
+        }
         return offspring_group, info
 
     def get_wandb_cfg(self):

@@ -1,6 +1,5 @@
 # Modified https://github.com/CodeReclaimers/neat-python/blob/master/neat/nn/feed_forward.py.
 
-from abc import *
 import os
 import pickle
 import math
@@ -11,26 +10,28 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from networks.abstracts import BaseNetwork
 from networks.neat.genes import Genome
 from .utils import find_required_nodes
+from .abstracts import NeatBase
 
 
-class NeatNetwork(BaseNetwork):
-    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, max_weight, min_weight, probs):
+class NeatNetwork(NeatBase):
+    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, mutate_std, max_weight, min_weight, probs):
         self.num_state = num_state
         self.num_action = num_action
         self.discrete_action = discrete_action
         self.init_mu = init_mu
         self.init_std = init_std
+        self.mutate_std = mutate_std
 
         # for genome
         self.max_weight = max_weight
         self.min_weight = min_weight
         self.probs = probs
 
-    def init_genes(self):
-        self.genome = Genome(self.num_state, self.num_action, self.init_std, self.max_weight, self.min_weight)
+    def init_genome(self):
+        self.genome = Genome(self.num_state, self.num_action, self.init_mu, self.init_std, self.mutate_std, self.max_weight, self.min_weight)
+        self.genome.normal_init()
         self._update_model()  # model must be updated after genome modified.
 
     def forward(self, x):
@@ -39,16 +40,13 @@ class NeatNetwork(BaseNetwork):
             output = np.argmax(output)
         return output
 
-    def normal_init(self):
-        self.genome.normal_init(self.init_mu, self.init_std)
-        self._update_model()  # model must be updated after genome modified.
-
     def reset(self):
         self.model.reset()
 
     def _update_model(self):
         self.model = RecurrentNetwork.create(self.genome)
 
+    # TODO: it works dirty.
     def replace_genome(self, nodes, connections):
         self.genome.replace_genome(nodes, connections)
         self._update_model()  # model must be updated after genome modified.
@@ -103,7 +101,8 @@ class NeatNetwork(BaseNetwork):
         plt.clf()
         return saved_path
 
-    def check_genome_model_synced(self):
+    def _check_genome_model_synced(self):
+        # check if genome.nodes == model nodes
         nodes = self.genome.node_genes.nodes
         all_node_keys = set(nodes.keys())
         connections = self.genome.connect_genes.connections
@@ -111,8 +110,9 @@ class NeatNetwork(BaseNetwork):
         for input_node_num, output_node_num in connections.keys():
             connections_nodes.add(input_node_num)
             connections_nodes.add(output_node_num)
-        assert connections_nodes == all_node_keys
+        node_synced = connections_nodes == all_node_keys
 
+        # check if node_evals <= genome nodes
         node_evals = self.model.node_evals
         node_eval_node_nums = set()
         for node in node_evals:
@@ -122,14 +122,17 @@ class NeatNetwork(BaseNetwork):
             for input_node_num, weight in input_list:
                 assert connections[(input_node_num, curr_node)].weight == weight
                 node_eval_node_nums.add(input_node_num)
-        assert node_eval_node_nums <= all_node_keys
+        eval_node_synced = node_eval_node_nums <= all_node_keys
+
+        return node_synced and eval_node_synced
 
     def mutate(self):
         self.genome.mutate_weight(self.probs["mutate_weight"])
+        self.genome.mutate_bias(self.probs["mutate_weight"])
         self.genome.mutate_add_node(self.probs["mutate_add_node"])
         self.genome.mutate_add_connection(self.probs["mutate_add_connection"])
         self._update_model()  # model must be updated after genome modified.
-        self.check_genome_model_synced()
+        assert self._check_genome_model_synced()
 
     def crossover(self, spouse, draw=False):
         p1_connect_genes = self.genome.get_connect_genes()
@@ -157,7 +160,7 @@ class NeatNetwork(BaseNetwork):
         # disjoint & excess crossover(treat the two equally).
         def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
             parent_connect_genes = parent_genome.get_connect_genes()
-            child_nodes.update(find_required_nodes(connection_keys, parent_genome))
+            child_nodes.update(find_required_nodes(connection_keys, parent_genome))  # TODO: Is it right to also replace bias, not just connections?
             for connection in connection_keys:
                 child_connections[connection] = parent_connect_genes[connection]
             return deepcopy(child_nodes), deepcopy(child_connections)
@@ -174,7 +177,7 @@ class NeatNetwork(BaseNetwork):
                 if random.random() < 0.5:
                     child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], spouse.genome)
         child.replace_genome(child_nodes, child_connections)
-        child.check_genome_model_synced()
+        assert child._check_genome_model_synced()
         return child
 
 
