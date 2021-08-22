@@ -1,5 +1,4 @@
 from envs import *
-from networks.neural_network import *
 from networks.neat.network import NeatNetwork
 from learning_strategies import *
 
@@ -17,13 +16,6 @@ def build_env(config, unity_worker_id):
 
 
 def build_network(config):
-    if config["name"] == "gym_model":
-        return GymEnvModel(
-            config["num_state"],
-            config["num_action"],
-            config["discrete_action"],
-            config["gru"],
-        )
     if config["name"] == "NeatNetwork":
         return NeatNetwork(
             config["num_state"],
@@ -51,28 +43,7 @@ def build_loop(
 ):
     strategy_cfg = config["strategy"]
 
-    if strategy_cfg["name"] == "simple_evolution":
-        strategy = simple_evolution(
-            strategy_cfg["init_sigma"],
-            strategy_cfg["sigma_decay"],
-            strategy_cfg["elite_num"],
-            strategy_cfg["offspring_num"],
-        )
-    elif strategy_cfg["name"] == "openai_es":
-        strategy = openai_es(
-            strategy_cfg["init_sigma"],
-            strategy_cfg["sigma_decay"],
-            strategy_cfg["learning_rate"],
-            strategy_cfg["offspring_num"],
-        )
-    elif strategy_cfg["name"] == "simple_genetic":
-        strategy = simple_genetic(
-            strategy_cfg["init_sigma"],
-            strategy_cfg["sigma_decay"],
-            strategy_cfg["elite_num"],
-            strategy_cfg["offspring_num"],
-        )
-    elif strategy_cfg["name"] == "neat":
+    if strategy_cfg["name"] == "neat":
         strategy = Neat(
             strategy_cfg["offspring_num"],
             strategy_cfg["crossover_ratio"],
