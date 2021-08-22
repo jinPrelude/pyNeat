@@ -18,17 +18,3 @@ class BaseNetwork(metaclass=ABCMeta):
     @abstractmethod
     def load_model(self, path):
         pass
-
-
-class EvolutionNetwork(BaseNetwork, nn.Module):
-    @abstractmethod
-    def zero_init(self):
-        pass
-
-    @abstractmethod
-    def get_param_list(self):
-        pass
-
-    @abstractmethod
-    def apply_param(self, param_lst: list):
-        pass
