@@ -34,5 +34,5 @@ class NeatBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def crossover(path, spouse, draw):
+    def crossover(spouse, draw):
         pass
