@@ -11,7 +11,7 @@ import torch
 import numpy as np
 
 import builder
-from learning_strategies.worker_func import run_rollout
+from loops.worker_func import run_rollout
 
 # keyboard interrupt(ctrl + c) handler.
 def sigterm_handler(signal, frame):

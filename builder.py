@@ -1,6 +1,7 @@
 from envs import *
 from networks.neat.network import NeatNetwork
 from learning_strategies import *
+from loops.loops import ESLoop
 
 
 def build_env(config, unity_worker_id):

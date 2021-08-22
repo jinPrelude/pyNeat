@@ -6,12 +6,12 @@ from copy import deepcopy
 from collections import deque
 from mpi4py import MPI
 import numpy as np
-import torch
 import wandb
-from moviepy.editor import ImageSequenceClip
-from pyvirtualdisplay import Display
 
-import builder
+# from moviepy.editor import ImageSequenceClip
+# from pyvirtualdisplay import Display
+# import builder
+
 from .abstracts import BaseESLoop
 
 comm = MPI.COMM_WORLD
@@ -56,8 +56,8 @@ class ESLoop(BaseESLoop):
             os.makedirs(_dir)
 
         if self.log:
-            self.display = Display(visible=0, size=(300, 300))
-            self.display.start()
+            # self.display = Display(visible=0, size=(300, 300))
+            # self.display.start()
             wandb.init(project=env_name, config=config)
             self.env_cfg = config["env"]
 
@@ -129,48 +129,51 @@ class ESLoop(BaseESLoop):
             elite = self.offspring_strategy.get_elite_model()
             if ep_num % self.save_model_period == 0:
                 if self.log:
-                    if "Unity" in self.env_name:
-                        save_pth = self.save_dir + "/saved_models/"
-                        elite.save_model(save_pth, f"ep_{ep_num}")
-                    else:
-                        test_log_model(self.save_dir, self.env_cfg, elite, ep_num)
+                    if "Unity" not in self.env_name:
+                        # test_log_model(self.save_dir, self.env_cfg, elite, ep_num)
+                        pass
+                    save_pth = self.save_dir + "/saved_models/"
+                    save_path_list = elite.save_model(save_pth, f"ep_{ep_num}")
+                    for path in save_path_list:
+                        wandb.save(path)
         self.terminate_all_workers()
-        self.display.stop()
+        # self.display.stop()
 
 
-def test_log_model(save_dir, env_cfg, elite_network, ep_num):
-    env = builder.build_env(env_cfg, rank)
-    agent_ids = env.get_agent_ids()
+# TODO: Disabled this function because it violates the
+# Acyclic Dependecies Principle(ADP) of the dependency graph, where
+# it import builder.
 
-    models = {}
-    for agent_id in agent_ids:
-        models[agent_id] = deepcopy(elite_network)
-        models[agent_id].reset()
-    obs = env.reset()
+# def test_log_model(save_dir, env_cfg, elite_network, ep_num):
+#     env = builder.build_env(env_cfg, rank)
+#     agent_ids = env.get_agent_ids()
 
-    done = False
-    episode_reward = 0
-    ep_step = 0
-    ep_render_lst = []
-    while not done:
-        actions = {}
-        for k, model in models.items():
-            s = obs[k]["state"][np.newaxis, ...]
-            actions[k] = model.forward(s)
-        obs, r, done, _ = env.step(actions)
-        rgb_array = env.render(mode="rgb_array")
-        ep_render_lst.append(rgb_array)
-        episode_reward += r
-        ep_step += 1
-    clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
-    clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
-    wandb.save(os.path.join(save_dir, "play.gif"))
-    save_path_list = elite_network.save_model(save_dir + "/saved_models/", f"ep_{ep_num}")
-    for path in save_path_list:
-        wandb.save(path)
+#     models = {}
+#     for agent_id in agent_ids:
+#         models[agent_id] = deepcopy(elite_network)
+#         models[agent_id].reset()
+#     obs = env.reset()
 
-    wandb.log({"test_reward": episode_reward})
+#     done = False
+#     episode_reward = 0
+#     ep_step = 0
+#     ep_render_lst = []
+#     while not done:
+#         actions = {}
+#         for k, model in models.items():
+#             s = obs[k]["state"][np.newaxis, ...]
+#             actions[k] = model.forward(s)
+#         obs, r, done, _ = env.step(actions)
+#         rgb_array = env.render(mode="rgb_array")
+#         ep_render_lst.append(rgb_array)
+#         episode_reward += r
+#         ep_step += 1
+#     clip = ImageSequenceClip(ep_render_lst[::2], fps=30)
+#     clip.write_gif(os.path.join(save_dir, "play.gif"), fps=30)
+#     wandb.save(os.path.join(save_dir, "play.gif"))
 
-    del ep_render_lst
+#     wandb.log({"test_reward": episode_reward})
 
-    return episode_reward
+#     del ep_render_lst
+
+#     return episode_reward
