@@ -73,6 +73,3 @@ class Neat(BaseOffspringStrategy):
             "offsprings_mean_reward": offsprings_mean_reward,
         }
         return offspring_group, info
-
-    def get_wandb_cfg(self):
-        pass
