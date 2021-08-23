@@ -16,7 +16,11 @@ class UnityCollectAppleWrapper(BaseEnvWrapper):
         self.max_step = max_step
 
         channel = EngineConfigurationChannel()
-        unityenv = UnityEnvironment("unityenvs/collectapple/game.x86_64", worker_id=worker_id, side_channels=[channel])
+        unityenv = UnityEnvironment(
+            "unityenvs/collectapple/game.x86_64",
+            worker_id=worker_id,
+            side_channels=[channel],
+        )
         channel.set_configuration_parameters(time_scale=20.0)
         self.env = UnityToGymWrapper(unityenv)
         self.curr_step = 0

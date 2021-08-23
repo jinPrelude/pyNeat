@@ -16,7 +16,18 @@ from .abstracts import BaseNeat
 
 
 class NeatNetwork(BaseNeat):
-    def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, mutate_std, max_weight, min_weight, probs):
+    def __init__(
+        self,
+        num_state,
+        num_action,
+        discrete_action,
+        init_mu,
+        init_std,
+        mutate_std,
+        max_weight,
+        min_weight,
+        probs,
+    ):
         self.num_state = num_state
         self.num_action = num_action
         self.discrete_action = discrete_action
@@ -30,7 +41,15 @@ class NeatNetwork(BaseNeat):
         self.probs = probs
 
     def init_genome(self):
-        self.genome = Genome(self.num_state, self.num_action, self.init_mu, self.init_std, self.mutate_std, self.max_weight, self.min_weight)
+        self.genome = Genome(
+            self.num_state,
+            self.num_action,
+            self.init_mu,
+            self.init_std,
+            self.mutate_std,
+            self.max_weight,
+            self.min_weight,
+        )
         self.genome.normal_init()
         self._update_model()  # model must be updated after genome modified.
 
@@ -153,14 +172,21 @@ class NeatNetwork(BaseNeat):
                 child_connections[connection] = p1_connect_genes[connection]
             else:
                 child_connections[connection] = p2_connect_genes[connection]
-            if p1_connect_genes[connection].enabled == False and p2_connect_genes[connection].enabled == False:
+            if (
+                p1_connect_genes[connection].enabled == False
+                and p2_connect_genes[connection].enabled == False
+            ):
                 if random.random() < self.probs["re_enable"]:
                     child_connections[connection].enabled = True
 
         # disjoint & excess crossover(treat the two equally).
-        def _add_node_connections(child_nodes, child_connections, connection_keys, parent_genome):
+        def _add_node_connections(
+            child_nodes, child_connections, connection_keys, parent_genome
+        ):
             parent_connect_genes = parent_genome.get_connect_genes()
-            child_nodes.update(find_required_nodes(connection_keys, parent_genome))  # TODO: Is it right to also replace bias, not just connections?
+            child_nodes.update(
+                find_required_nodes(connection_keys, parent_genome)
+            )  # TODO: Is it right to also replace bias, not just connections?
             for connection in connection_keys:
                 child_connections[connection] = parent_connect_genes[connection]
             return deepcopy(child_nodes), deepcopy(child_connections)
@@ -168,14 +194,20 @@ class NeatNetwork(BaseNeat):
         p1_differences = p1_connections - p2_connections
         p2_differences = p2_connections - p1_connections
         if not draw:
-            child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, p1_differences, self.genome)
+            child_nodes, child_connections = _add_node_connections(
+                child_nodes, child_connections, p1_differences, self.genome
+            )
         else:
             for connection in p1_differences:
                 if random.random() < 0.5:
-                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], self.genome)
+                    child_nodes, child_connections = _add_node_connections(
+                        child_nodes, child_connections, [connection], self.genome
+                    )
             for connection in p2_differences:
                 if random.random() < 0.5:
-                    child_nodes, child_connections = _add_node_connections(child_nodes, child_connections, [connection], spouse.genome)
+                    child_nodes, child_connections = _add_node_connections(
+                        child_nodes, child_connections, [connection], spouse.genome
+                    )
         child.replace_genome(child_nodes, child_connections)
         assert child._check_genome_model_synced()
         return child
@@ -204,7 +236,11 @@ class RecurrentNetwork(object):
 
     def activate(self, inputs):
         if len(self.input_nodes) != len(inputs):
-            raise RuntimeError("Expected {0:n} inputs, got {1:n}".format(len(self.input_nodes), len(inputs)))
+            raise RuntimeError(
+                "Expected {0:n} inputs, got {1:n}".format(
+                    len(self.input_nodes), len(inputs)
+                )
+            )
 
         ivalues = self.values[self.active]
         ovalues = self.values[1 - self.active]

@@ -6,7 +6,18 @@ import numpy as np
 
 ##### Genome #####
 class Genome:
-    def __init__(self, num_state, num_action, init_mu, init_std, mutate_std, max_weight, min_weight, mu=0.0, std=1.0):
+    def __init__(
+        self,
+        num_state,
+        num_action,
+        init_mu,
+        init_std,
+        mutate_std,
+        max_weight,
+        min_weight,
+        mu=0.0,
+        std=1.0,
+    ):
         self.init_mu = init_mu
         self.init_std = init_std
         self.mutate_std = mutate_std
@@ -52,7 +63,9 @@ class Genome:
                 if random.random() < 0.9:
                     # uniform perturb originally but I didn't understand how to implement it.
                     noise = np.random.normal(0, self.mutate_std)
-                    weight = np.clip(gene.weight + noise, self.min_weight, self.max_weight)
+                    weight = np.clip(
+                        gene.weight + noise, self.min_weight, self.max_weight
+                    )
 
                 else:
                     weight = np.random.uniform(self.min_weight, self.max_weight)
@@ -79,8 +92,12 @@ class Genome:
             conn_to_split = random.choice(list(connect_genes.values()))
             new_node_num = self.node_genes.add_overwrite_node("hidden")
             conn_to_split.enabled = False
-            self.connect_genes.add_connection(conn_to_split.in_node_num, new_node_num, 1.0, True)
-            self.connect_genes.add_connection(new_node_num, conn_to_split.out_node_num, 1.0, True)
+            self.connect_genes.add_connection(
+                conn_to_split.in_node_num, new_node_num, 1.0, True
+            )
+            self.connect_genes.add_connection(
+                new_node_num, conn_to_split.out_node_num, 1.0, True
+            )
 
     def mutate_add_connection(self, prob):
         if random.random() < prob:
@@ -92,7 +109,11 @@ class Genome:
             input_node_candidates = self.get_node_keys("all")
             possible_combs = set(product(input_node_candidates, output_node_candidates))
             # Don't allow connections between two output nodes
-            possible_combs = set(x for x in possible_combs if not (x[0] in output_node_keys and x[1] in output_node_keys))
+            possible_combs = set(
+                x
+                for x in possible_combs
+                if not (x[0] in output_node_keys and x[1] in output_node_keys)
+            )
             possible_combs = list(possible_combs - connections_keys)
             if len(possible_combs) == 0:
                 return
@@ -115,7 +136,9 @@ class NodeGenes:
         for _ in range(num_action):
             self.add_overwrite_node("output")
 
-    def add_overwrite_node(self, node_type: str, node_num: int = None, bias=None) -> int:
+    def add_overwrite_node(
+        self, node_type: str, node_num: int = None, bias=None
+    ) -> int:
         # add node. if node_num already exist overwrite.
         if node_num is None:
             node_num = self.new_node_idx
@@ -160,10 +183,14 @@ class ConnectGenes:
             for output_n in output_nodes:
                 self.add_connection(sensor_n, output_n)
 
-    def add_connection(self, in_node_num, out_node_num, weight=None, enabled=True) -> int:
+    def add_connection(
+        self, in_node_num, out_node_num, weight=None, enabled=True
+    ) -> int:
         if weight is None:
             weight = np.random.normal(self.init_mu, self.init_std)
-        self.connections[(in_node_num, out_node_num)] = Connect(in_node_num, out_node_num, weight, enabled)
+        self.connections[(in_node_num, out_node_num)] = Connect(
+            in_node_num, out_node_num, weight, enabled
+        )
 
     def replace(self, connections):
         self.connections = connections

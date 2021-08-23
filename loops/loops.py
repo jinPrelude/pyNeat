@@ -80,13 +80,17 @@ class ESLoop(BaseESLoop):
     def run(self):
 
         # init offsprings
-        offsprings = self.offspring_strategy.init_offspring(self.network, self.agent_ids)
+        offsprings = self.offspring_strategy.init_offspring(
+            self.network, self.agent_ids
+        )
         ep_num = 0
         for _ in range(self.generation_num):
             start_time = time.time()
             ep_num += 1
 
-            arguments = [(off_id, off, self.eval_ep_num) for off_id, off in enumerate(offsprings)]
+            arguments = [
+                (off_id, off, self.eval_ep_num) for off_id, off in enumerate(offsprings)
+            ]
             # rollout
             rollout_start_time = time.time()
             rewards = np.zeros(len(offsprings))

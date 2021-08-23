@@ -37,7 +37,9 @@ def mpi_fork(n):
         env = os.environ.copy()
         env.update(MKL_NUM_THREADS="1", OMP_NUM_THREADS="1", IN_MPI="1")
         print(["mpiexec", "-n", str(n), sys.executable] + sys.argv)
-        subprocess.check_call(["mpiexec", "-n", str(n), sys.executable] + ["-u"] + sys.argv, env=env)
+        subprocess.check_call(
+            ["mpiexec", "-n", str(n), sys.executable] + ["-u"] + sys.argv, env=env
+        )
         return "parent"
     else:
         global nworkers, rank
@@ -82,6 +84,7 @@ def worker(seed, env_cfg, network_cfg):
     run_rollout(env, network)
 
 
+# fmt: off
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cfg-path", type=str, default="conf/cartpole_openaies.yaml", help="config file to run.")

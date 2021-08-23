@@ -24,7 +24,13 @@ def mutate_offsprings(offsprings: List[BaseNeat]) -> List[BaseNeat]:
     return offsprings
 
 
-def crossover_offsprings(parents: List[BaseNeat], rewards: List[float], offspring_num: int, delta_dict: Dict[tuple, float], delta_threshold: float) -> List[BaseNeat]:
+def crossover_offsprings(
+    parents: List[BaseNeat],
+    rewards: List[float],
+    offspring_num: int,
+    delta_dict: Dict[tuple, float],
+    delta_threshold: float,
+) -> List[BaseNeat]:
     offsprings = []
     parents, rewards = sort_offsprings_rewards(parents, rewards)
     p = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))
