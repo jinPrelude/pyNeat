@@ -7,7 +7,6 @@ import random
 
 import yaml
 from mpi4py import MPI
-import torch
 import numpy as np
 
 import builder
@@ -49,7 +48,6 @@ def mpi_fork(n):
 
 
 def set_seed(seed):
-    torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 

@@ -1,7 +1,6 @@
 import random
 from copy import deepcopy
 
-import torch
 import numpy as np
 
 from learning_strategies.abstracts import BaseOffspringStrategy
@@ -40,7 +39,7 @@ class Neat(BaseOffspringStrategy):
     def get_elite_model(self):
         return self.elite_model
 
-    def init_offspring(self, network: torch.nn.Module, agent_ids: list):
+    def init_offspring(self, network, agent_ids: list):
         self.agent_ids = agent_ids
         offspring_group = []
         for _ in range(self.offspring_num):

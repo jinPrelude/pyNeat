@@ -3,7 +3,6 @@ import random
 import yaml
 import argparse
 import numpy as np
-import torch
 import builder
 import os
 from copy import deepcopy
@@ -12,7 +11,6 @@ from pyvirtualdisplay import Display
 
 
 def set_seed(seed):
-    torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 
