@@ -1,17 +1,18 @@
+from typing import Dict
 from envs import *
 from networks.neat.network import NeatNetwork
 from learning_strategies import *
 from loops.loops import ESLoop
 
 
-def build_env(config, unity_worker_id):
+def build_env(config: dict, unity_worker_id: int):
     if config["name"] in ["simple_spread", "waterworld", "multiwalker"]:
         return PettingzooWrapper(config["name"], config["max_step"])
-    elif "Unity" in config["name"]:
-        if "CollectApple" in config["name"]:
-            return UnityCollectAppleWrapper(config["name"], unity_worker_id, config["max_step"])
     elif config["name"] in ["AndOps"]:
         return AndOps()
+    # elif "Unity" in config["name"]:
+    #     if "CollectApple" in config["name"]:
+    #         return UnityCollectAppleWrapper(config["name"], unity_worker_id, config["max_step"])
     else:
         return GymWrapper(config["name"], config["max_step"], config["pomdp"])
 

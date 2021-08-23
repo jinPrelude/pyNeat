@@ -2,8 +2,10 @@ import numpy as np
 from pettingzoo.mpe import simple_spread_v2
 from pettingzoo.sisl import multiwalker_v6, waterworld_v3
 
+from .abstracts import BaseEnvWrapper
 
-class PettingzooWrapper:
+
+class PettingzooWrapper(BaseEnvWrapper):
     def __init__(self, name, max_step=None):
         if name == "simple_spread":
             self.env = simple_spread_v2.env()

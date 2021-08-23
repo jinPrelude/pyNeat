@@ -1,10 +1,10 @@
 import gym
-import pybullet_envs
+from .abstracts import BaseEnvWrapper
 
 gym.logger.set_level(40)
 
 
-class GymWrapper:
+class GymWrapper(BaseEnvWrapper):
     def __init__(self, name, max_step=None, pomdp=False):
         self.env = gym.make(name)
         if pomdp:

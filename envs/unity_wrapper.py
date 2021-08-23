@@ -5,10 +5,12 @@ from mlagents_envs.side_channel.engine_configuration_channel import (
     EngineConfigurationChannel,
 )
 
+from .abstracts import BaseEnvWrapper
+
 gym.logger.set_level(40)
 
 
-class UnityCollectAppleWrapper:
+class UnityCollectAppleWrapper(BaseEnvWrapper):
     def __init__(self, name, worker_id, max_step=None):
         self.name = name
         self.max_step = max_step

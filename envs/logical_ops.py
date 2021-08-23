@@ -1,10 +1,11 @@
 import math
 import gym
 import numpy as np
-from numpy.lib.stride_tricks import DummyArray
+
+from .abstracts import BaseEnvWrapper
 
 
-class AndOps(gym.Env):
+class AndOps(BaseEnvWrapper):
     metadata = {"render.modes": ["human"]}
 
     def __init__(self):
