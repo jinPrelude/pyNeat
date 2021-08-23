@@ -1,15 +1,30 @@
 from itertools import combinations
+from typing import List, Dict
 
 import numpy as np
 
+from networks.neat.abstracts import BaseNeat
 
-def mutate_offsprings(offsprings):
+
+def mutate_offsprings(offsprings: List[BaseNeat]) -> List[BaseNeat]:
+    """Mutate all offsprings in the list.
+
+    Parameters
+    ----------
+    offsprings : List[BaseNeat]
+        Offsprings to be mutated.
+
+    Returns
+    -------
+    List[BaseNeat]
+        Mutataed offsprings.
+    """
     for off in offsprings:
         off.mutate()
     return offsprings
 
 
-def crossover_offsprings(parents, rewards, offspring_num, delta_dict, delta_threshold):
+def crossover_offsprings(parents: List[BaseNeat], rewards: List[float], offspring_num: int, delta_dict: Dict[tuple, float], delta_threshold: float) -> List[BaseNeat]:
     offsprings = []
     parents, rewards = sort_offsprings_rewards(parents, rewards)
     p = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))

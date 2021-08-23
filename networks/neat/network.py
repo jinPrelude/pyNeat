@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 
 from networks.neat.genes import Genome
 from .utils import find_required_nodes
-from .abstracts import NeatBase
+from .abstracts import BaseNeat
 
 
-class NeatNetwork(NeatBase):
+class NeatNetwork(BaseNeat):
     def __init__(self, num_state, num_action, discrete_action, init_mu, init_std, mutate_std, max_weight, min_weight, probs):
         self.num_state = num_state
         self.num_action = num_action

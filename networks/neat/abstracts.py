@@ -1,9 +1,9 @@
 from abc import *
 
 
-class NeatBase(metaclass=ABCMeta):
+class BaseNeat(metaclass=ABCMeta):
     def __init__(self):
-        super(NeatBase, self).__init__()
+        super(BaseNeat, self).__init__()
 
     @abstractmethod
     def init_genome(self):
