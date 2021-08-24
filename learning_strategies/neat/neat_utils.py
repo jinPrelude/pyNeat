@@ -33,7 +33,12 @@ def crossover_offsprings(
 ) -> List[BaseNeat]:
     offsprings = []
     parents, rewards = sort_offsprings_rewards(parents, rewards)
-    p = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))
+
+    # calculate selection priority.
+    rank_id = np.flip(np.argsort(rewards))
+    prob_weight = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))
+    p = [prob_weight[x] for x in rank_id]
+
     while len(offsprings) < offspring_num:
         p1_idx, p2_idx = np.random.choice(range(len(parents)), 2, p=p, replace=False)
         if delta_dict[(p1_idx, p2_idx)] > delta_threshold:
