@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import numpy as np
 
@@ -25,25 +25,45 @@ def mutate_offsprings(offsprings: List[BaseNeat]) -> List[BaseNeat]:
 
 
 def crossover_offsprings(
-    parents: List[BaseNeat],
+    survivals: List[BaseNeat],
     rewards: List[float],
     offspring_num: int,
     delta_dict: Dict[tuple, float],
     delta_threshold: float,
 ) -> List[BaseNeat]:
-    offsprings = []
-    parents, rewards = sort_offsprings_rewards(parents, rewards)
+    """Crossover survivals and make new offsprings.
 
+    Parameters
+    ----------
+    survivals : List[BaseNeat]
+        Survivals of the previous rollout.
+    rewards : List[float]
+        Rewards of the survivals.
+    offspring_num : int
+        Number of the offsprings to be generated.
+    delta_dict : Dict[tuple, float]
+        Delta score of every survivals' combination.
+    delta_threshold : float
+        Delta threshold of survivals.
+
+    Returns
+    -------
+    List[BaseNeat]
+        Offsprings.
+    """
     # calculate selection priority.
     rank_id = np.flip(np.argsort(rewards))
-    prob_weight = np.arange(1, len(parents) + 1)[::-1] / sum(range(len(parents) + 1))
+    prob_weight = np.arange(1, len(survivals) + 1)[::-1] / sum(
+        range(len(survivals) + 1)
+    )
     p = [prob_weight[x] for x in rank_id]
 
+    offsprings = []
     while len(offsprings) < offspring_num:
-        p1_idx, p2_idx = np.random.choice(range(len(parents)), 2, p=p, replace=False)
+        p1_idx, p2_idx = np.random.choice(range(len(survivals)), 2, p=p, replace=False)
         if delta_dict[(p1_idx, p2_idx)] > delta_threshold:
             continue
-        p1, p2 = parents[p1_idx], parents[p2_idx]
+        p1, p2 = survivals[p1_idx], survivals[p2_idx]
         if rewards[p1_idx] < rewards[p2_idx]:
             child = p1.crossover(p2)
         elif rewards[p1_idx] > rewards[p2_idx]:
@@ -55,7 +75,32 @@ def crossover_offsprings(
     return offsprings
 
 
-def calculate_adjusted_fitness(offsprings, rewards, delta_threshold, delta_dict):
+def calculate_adjusted_fitness(
+    offsprings: List[BaseNeat],
+    rewards: List[float],
+    delta_threshold: float,
+    delta_dict: Dict[tuple, float],
+) -> Tuple[List[float], List[float]]:
+    """Calculate adjusted fitness of the offsprings.
+
+    Parameters
+    ----------
+    offsprings : List[BaseNeat]
+        Offsprings.
+    rewards : List[float]
+        Rewards of the offsprings.
+    delta_threshold : float
+        Delta threshold.
+    delta_dict : Dict[tuple, float]
+        Delta scores of every offsprings' combination.
+
+    Returns
+    -------
+    Tuple[List[float], List[float]]
+        adjusted fitness: adjusted fitness of the offsprings.
+        pass_score: Difference between one's score and the same species' avg score.
+                    Only the one with a positive pass_score survive.
+    """
     # regularize rewards
     max_r = max(rewards)
     min_r = min(rewards)
@@ -84,19 +129,58 @@ def calculate_adjusted_fitness(offsprings, rewards, delta_threshold, delta_dict)
     return adjusted_fitness, pass_score
 
 
-def get_delta_dict(offsprings, c1, c3):
-    delta_list = {}
+def get_delta_dict(
+    offsprings: List[BaseNeat], c1: float, c3: float
+) -> Tuple[dict, float]:
+    """Calculate delta score of every offsprings' combination.
+
+    Parameters
+    ----------
+    offsprings : List[BaseNeat]
+        Offsprings.
+    c1 : float
+        Coeffucuent that controls the weight of the number of different genes.
+    c3 : float
+        Coeffucuent that controls the weight of the difference in weight mean.
+
+    Returns
+    -------
+    Tuple[dict, float]
+        delta_dict: Dict[Tuple[int, int], float]
+            Delta scores of every offsprings' combination.
+        diversity_score: float
+            Value proportional to the mean of every delta score.
+    """
+    delta_dict = {}
     diversity_score = 0
     parent_indices = [i for i in range(len(offsprings))]
     parent_combs = list(combinations(parent_indices, 2))
     for (i, j) in parent_combs:
-        delta_list[(i, j)] = calculate_delta(offsprings[i], offsprings[j], c1, c3)
-        diversity_score += delta_list[(i, j)] / 1e6
-        delta_list[(j, i)] = delta_list[(i, j)]
-    return delta_list, diversity_score
+        delta_dict[(i, j)] = calculate_delta(offsprings[i], offsprings[j], c1, c3)
+        diversity_score += delta_dict[(i, j)] / 1e6
+        delta_dict[(j, i)] = delta_dict[(i, j)]
+    return delta_dict, diversity_score
 
 
-def calculate_delta(p1, p2, c1, c3):
+def calculate_delta(p1: BaseNeat, p2: BaseNeat, c1: float, c3: float) -> float:
+    """Calculate delta score of the two agent.
+
+    Parameters
+    ----------
+    p1 : BaseNeat
+        Agent 1.
+    p2 : BaseNeat
+        Agent 2.
+    c1 : float
+        Coeffucuent that controls the weight of the number of different genes.
+    c3 : float
+        Coeffucuent that controls the weight of the difference in weight mean.
+
+    Returns
+    -------
+    float
+        Delta score of the two agent.
+    """
     p1_genes = p1.genome.get_connect_genes()
     p2_genes = p2.genome.get_connect_genes()
     p1_connect_keys = set(p1_genes.keys())
@@ -113,7 +197,19 @@ def calculate_delta(p1, p2, c1, c3):
     return delta
 
 
-def get_weights_average(neat_network):
+def get_weights_average(neat_network: BaseNeat) -> float:
+    """Get Average value of all network's wieghts.
+
+    Parameters
+    ----------
+    neat_network : BaseNeat
+        Agent.
+
+    Returns
+    -------
+    float
+        Average of all network's weights.
+    """
     # for delta calculation
     connect_genes = neat_network.genome.get_connect_genes()
     weights = []
@@ -122,7 +218,36 @@ def get_weights_average(neat_network):
     return mean(weights)
 
 
-def pick_by_pass_score(offsprings, adjusted_fitness, pass_scores, survival_num):
+def pick_by_pass_score(
+    offsprings: List[BaseNeat],
+    adjusted_fitness: List[float],
+    pass_scores: List[float],
+    survival_num: int,
+) -> Tuple[List[BaseNeat], List[float]]:
+    """Return the agent which pass_score is positive.
+
+    If the number of agents which pass_score is positive is less then
+    survival_num, returns agent as many as survival_num in order of pass_score.
+
+    Parameters
+    ----------
+    offsprings : List[BaseNeat]
+        Offsprings.
+    adjusted_fitness : List[float]
+        Adjusted fitnesses of the offsprings.
+    pass_scores : List[float]
+        Pass scores of each offsprings.
+    survival_num : int
+        Minimum number of agents to be survived.
+
+    Returns
+    -------
+    Tuple[List[BaseNeat], List[float]]
+        survivals: List[BaseNeat]
+            Agents which pass_score is positive.
+        survivals_rewards: List[float]:
+            rewards of survived agents.
+    """
     # pick offsprings which fitness score is higher than speices' average.
     pass_num = len([i for i in pass_scores if i > 0])
     if pass_num < survival_num:
@@ -141,14 +266,42 @@ def pick_by_pass_score(offsprings, adjusted_fitness, pass_scores, survival_num):
     return survivals, survivals_rewards
 
 
-def sort_offsprings_rewards(offsprings, rewards):
+def sort_offsprings_rewards(
+    offsprings: List[BaseNeat], rewards: List[float]
+) -> Tuple[List[BaseNeat], List[float]]:
+    """Sort offspring and rewards list in order of higher rewards.
+
+    Parameters
+    ----------
+    offsprings : List[BaseNeat]
+        Offsprings.
+    rewards : List[float]
+        Rewards of the offsprings.
+
+    Returns
+    -------
+    Tuple[List[BaseNeat], List[float]]
+        sorted_offsprings: List[BaseNeat]
+        sorted_rewards: List[float]
+    """
     rank_id = np.flip(np.argsort(rewards))
     sorted_offsprings = [offsprings[i] for i in rank_id]
     sorted_rewards = [rewards[i] for i in rank_id]
     return sorted_offsprings, sorted_rewards
 
 
-def mean(x_list):
+def mean(x_list: List) -> float:
+    """Returns the average value of the list.
+
+    Parameters
+    ----------
+    x_list : List
+
+    Returns
+    -------
+    float
+        Average value of the list.
+    """
     if len(x_list) == 0:
         return 0
     else:
