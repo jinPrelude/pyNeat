@@ -1,4 +1,5 @@
-# Modified https://github.com/CodeReclaimers/neat-python/blob/master/neat/nn/feed_forward.py.
+# This code is brought from neat-python and modified to fit our repo.
+# https://github.com/CodeReclaimers/neat-python/blob/master/neat/nn/feed_forward.py.
 
 import os
 import pickle
