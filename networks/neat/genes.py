@@ -8,15 +8,13 @@ import numpy as np
 class Genome:
     def __init__(
         self,
-        num_state,
-        num_action,
-        init_mu,
-        init_std,
-        mutate_std,
-        max_weight,
-        min_weight,
-        mu=0.0,
-        std=1.0,
+        num_state: int,
+        num_action: int,
+        init_mu: float,
+        init_std: float,
+        mutate_std: float,
+        max_weight: float,
+        min_weight: float,
     ):
         self.init_mu = init_mu
         self.init_std = init_std

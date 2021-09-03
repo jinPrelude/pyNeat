@@ -8,6 +8,9 @@ from mpi4py import MPI
 import numpy as np
 import wandb
 
+from networks.neat.abstracts import BaseNeat
+from learning_strategies.abstracts import BaseOffspringStrategy
+
 # from moviepy.editor import ImageSequenceClip
 # from pyvirtualdisplay import Display
 # import builder
@@ -19,19 +22,71 @@ rank = comm.Get_rank()
 
 
 class ESLoop(BaseESLoop):
+    """Main class where evaluation loop is executed.
+
+    Attributes
+    ----------
+    network: BaseNeat
+        It is used to initialize agents in a strategy class.
+    n_workers: int
+        Number of process for rollout.
+    offspring_strategy: BaseOffspringStrategy
+        Offspring strategy.
+    generation_num: int
+        Determine how many rollouts to repeat.
+    eval_ep_num: int
+        Determine how many repeated evaluations will be made for each agent.
+    log: bool
+        Wheter you use wandb logging.
+    save_model_period: int
+        How often to leave wandb log and save model.
+    agent_ids: list
+        Agent IDs required for episode.
+    env_name: str
+        Name of the environment.
+    self.save_dir: str
+        Path to store the network for logging.
+
+    """
+
     def __init__(
         self,
-        config,
-        offspring_strategy,
-        agent_ids,
-        env_name,
-        network,
-        generation_num,
-        n_workers,
-        eval_ep_num,
-        log=False,
-        save_model_period=10,
+        config: dict,
+        offspring_strategy: BaseOffspringStrategy,
+        agent_ids: list,
+        env_name: str,
+        network: BaseNeat,
+        generation_num: int,
+        n_workers: int,
+        eval_ep_num: int,
+        log: bool = False,
+        save_model_period: int = 10,
     ):
+        """ESLoop init method.
+
+        Parameters
+        ----------
+        config : dict
+            Provides information for building environment and wandb logs.
+        offspring_strategy : BaseOffspringStrategy
+            Offspring strategy.
+        agent_ids : list
+            Agent IDs required for episode.
+        env_name : str
+            Name of the environment.
+        network : BaseNeat
+            It is used to initialize agents in a strategy class.
+        generation_num : int
+            Determine how many rollouts to repeat.
+        n_workers : int
+            Number of process for rollout.
+        eval_ep_num : int
+            Determine how many repeated evaluations will be made for each agent.
+        log : bool, optional
+            Wheter you use wandb logging, by default False
+        save_model_period : int, optional
+            How often to leave wandb log and save model, by default 10
+        """
         super().__init__()
         self.network = network
         self.n_workers = n_workers
@@ -62,9 +117,17 @@ class ESLoop(BaseESLoop):
             self.env_cfg = config["env"]
 
     def reset_worker_status(self):
+        """Reset all worker status to 0. Free workers are 0, busy workers are 1."""
         self.free_worker = np.zeros(self.n_workers)
 
-    def get_free_worker_rank(self):
+    def get_free_worker_rank(self) -> int:
+        """Randomly returns one of the id of the free worker.
+
+        Returns
+        -------
+        int
+            One of the free worker's ID.
+        """
         indices = np.argwhere(self.free_worker == 0)
         if len(indices) == 0:
             return None
@@ -74,11 +137,12 @@ class ESLoop(BaseESLoop):
             return idx + 1
 
     def terminate_all_workers(self):
+        """Terminate all workers by sending "terminate" message."""
         for i in range(1, self.n_workers + 1):
             comm.send("terminate", dest=i, tag=1000)
 
     def run(self):
-
+        """Start training."""
         # init offsprings
         offsprings = self.offspring_strategy.init_offspring(
             self.network, self.agent_ids

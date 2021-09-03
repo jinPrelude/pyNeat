@@ -1,12 +1,23 @@
 from mpi4py import MPI
 import numpy as np
 
+from envs.abstracts import BaseEnvWrapper
+
 # MPI setting.
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 
 
-def run_rollout(env, network):
+def run_rollout(env: BaseEnvWrapper):
+    """Rollout function.
+
+    Build the environment and when receive agents over communication,
+    epeat episodes as many times as eval_ep_num and sends the average score.
+
+    Parameters
+    ----------
+    env : BaseEnvWrapper
+    """
     count = 0
     while True:
         args = comm.recv(source=0, tag=1000)

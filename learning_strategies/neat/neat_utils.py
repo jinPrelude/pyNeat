@@ -44,7 +44,7 @@ def crossover_offsprings(
     delta_dict : Dict[tuple, float]
         Delta score of every survivals' combination.
     delta_threshold : float
-        Delta threshold of survivals.
+        Delta threshold.
 
     Returns
     -------
