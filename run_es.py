@@ -86,7 +86,7 @@ def worker(seed, env_cfg, network_cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg-path", type=str, default="conf/cartpole_openaies.yaml", help="config file to run.")
+    parser.add_argument("--cfg-path", type=str, default="conf/neat/cartpole.yaml", help="config file to run.")
     parser.add_argument("--seed", type=int, default=0, help="random seed.")
     parser.add_argument("--n-workers", type=int, default=11)
     parser.add_argument("--generation-num", type=int, default=10000, help="max number of generation iteration.")
