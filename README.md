@@ -3,7 +3,8 @@
   <img src="https://user-images.githubusercontent.com/16518993/126922639-5baa4176-f85d-4642-a6b3-ddd94ed56448.gif" width="250" />
   <img src="https://user-images.githubusercontent.com/16518993/149608616-cfaa6091-08a8-419c-90ef-2c2f1510feba.gif" width="250" />
 </p>
-Pure Python implementation of [NEAT](http://nn.cs.utexas.edu/keyword?stanley:ec02). 
+
+Pure Python implementation of [NEAT](https://nn.cs.utexas.edu/keyword?stanley:ec02). 
 Although this project is heavily inspired by the official NEAT Python implementation([NEAT-Python](https://github.com/CodeReclaimers/neat-python)), it's different in that it's not intended to be able to graft NEAT to other projects, but to show intuitively how NEAT works. Therefore, much of the code is designed to help code readers intuitively understand.
 
 ## installation
