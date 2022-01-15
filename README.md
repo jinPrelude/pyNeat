@@ -58,6 +58,7 @@ optional arguments:
 ```
 ## Advanced logging with Wandb
  You need [wandb](wandb.ai) account before using logging function. Using `--log` flag, you can use advanced training logging without any charge. Using `--log`, You can check the current training progress for every steps, morphology of the Neat network and the test episode result as a gif for every `--save-model-period`.
+
 <img src="https://user-images.githubusercontent.com/16518993/149608749-548ed191-de27-42c8-85dd-63fa3900437b.PNG" width="350" />
 <img src="https://user-images.githubusercontent.com/16518993/149608917-84f25aa0-4691-45b1-9b43-e0cf4f912265.PNG" width="350" />
 <img src="https://user-images.githubusercontent.com/16518993/149608942-c5e20192-cebe-41f3-858e-716970a5402d.PNG" width="350" />
