@@ -2,6 +2,7 @@
 <p float="center">
   <img src="https://user-images.githubusercontent.com/16518993/126922639-5baa4176-f85d-4642-a6b3-ddd94ed56448.gif" width="250" />
   <img src="https://user-images.githubusercontent.com/16518993/149608616-cfaa6091-08a8-419c-90ef-2c2f1510feba.gif" width="250" />
+  <img src="https://user-images.githubusercontent.com/16518993/149610043-a980b75c-fb8f-4c52-aeb0-be8863100374.png" width="270" />
 </p>
 
 Pure Python implementation of [NEAT](https://nn.cs.utexas.edu/keyword?stanley:ec02). 
